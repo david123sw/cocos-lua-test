@@ -1,3 +1,5 @@
+--refer url as following:
+--http://www.runoob.com/lua/lua-data-types.html
 local gta = {} or gta
 gta.IS_DEBUG = true
 gta.APP_ENTRY_IP = "not defined"
@@ -61,18 +63,41 @@ end
 
 function gta.cclog(tag, ...)
     local tag_ = tag or ""
-    local params = ... or ""
-    local t_ = type(params)
+    -- local params = ... or ""
+    -- local t_ = type(params)
 
-    if "string" == t_ then
-        tag_ = tag_ .. params
-    elseif "table" == t_ then
-        local tmp = "{"
-        for k,v in pairs(params) do
-            tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ""
+    local function tableParser(invalue)
+        local params = invalue or ""
+        local t_ = type(params)
+
+        if "string" == t_ then
+            tag_ = tag_ .. params
+        elseif "table" == t_ then
+            local tmp = "{"
+            for k,v in pairs(params) do
+                if "string" == v then
+                    tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ""
+                else
+                    tmp = tmp .. tostring(k) .. ":" .. tableParser(v) .. ""
+                end
+            end
+            tag_ = tag_ .. ":" .. tmp .. "}"
         end
-        tag_ = tag_ .. "" .. tmp .. "}"
+
+        return tag_
     end
+
+    tableParser(...)
+
+    -- if "string" == t_ then
+    --     tag_ = tag_ .. params
+    -- elseif "table" == t_ then
+    --     local tmp = "{"
+    --     for k,v in pairs(params) do
+    --         tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ""
+    --     end
+    --     tag_ = tag_ .. ":" .. tmp .. "}"
+    -- end
 
     if gta.IS_DEBUG then
     print(os.date("%c") .. " debug------------------------------------------ " .. " "  .. tag_)
