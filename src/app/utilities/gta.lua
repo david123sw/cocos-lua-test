@@ -68,14 +68,20 @@ function gta.cclog(tag, ...)
         local parseString = ""
         local params = invalue or ""
         local paramsType = type(params)
+        local paramsSize = #params
+        local parseParamsCount = 0
 
         if "string" == paramsType then
             parseString = "" .. params
         elseif "table" == paramsType then
             local tmp = "{"
             for k,v in pairs(params) do
+                parseParamsCount = parseParamsCount + 1
                 if "table" ~= v then
-                    tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ","
+                    tmp = tmp .. tostring(k) .. ":" .. tostring(v)
+                    if paramsSize - 1 > parseParamsCount then
+                        tmp = tmp .. ","
+                    end
                 else
                     tmp = tmp .. tostring(k) .. ":" .. tableParser(v) .. ","
                 end
