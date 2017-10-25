@@ -63,32 +63,33 @@ end
 
 function gta.cclog(tag, ...)
     local tag_ = tag or ""
-    -- local params = ... or ""
-    -- local t_ = type(params)
 
     local function tableParser(invalue)
+        local parseString = ""
         local params = invalue or ""
-        local t_ = type(params)
+        local paramsType = type(params)
 
-        if "string" == t_ then
-            tag_ = tag_ .. params
-        elseif "table" == t_ then
+        if "string" == paramsType then
+            parseString = "" .. params
+        elseif "table" == paramsType then
             local tmp = "{"
             for k,v in pairs(params) do
-                if "string" == v then
-                    tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ""
+                if "table" ~= v then
+                    tmp = tmp .. tostring(k) .. ":" .. tostring(v) .. ","
                 else
-                    tmp = tmp .. tostring(k) .. ":" .. tableParser(v) .. ""
+                    tmp = tmp .. tostring(k) .. ":" .. tableParser(v) .. ","
                 end
             end
-            tag_ = tag_ .. ":" .. tmp .. "}"
+            parseString = parseString .. tmp .. "}"
         end
 
-        return tag_
+        return parseString
     end
 
-    tableParser(...)
+    tag_ = tag_ .. ":" ..  tableParser(...)
 
+    -- local params = ... or ""
+    -- local t_ = type(params)
     -- if "string" == t_ then
     --     tag_ = tag_ .. params
     -- elseif "table" == t_ then
