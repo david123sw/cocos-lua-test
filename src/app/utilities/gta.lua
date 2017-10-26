@@ -5,18 +5,33 @@ gta.IS_DEBUG = true
 gta.APP_ENTRY_IP = "not defined"
 gta.APP_ENTRY_PORT = "not defined"
 
-function gta:getOS()
+function gta:getOS(...)
     print("gta:getOS")
-    return "ret from getOSxxxx"
+    local args = {...}
+    local count = 0
+    for k,v in pairs(args) do
+        count = count + 1
+    end
+    return "ret from getOSxxxx" .. count
 end
 
-gta.getOS2 = function()
-    print("gta:getOS2")
+gta.getOS2 = function(...)
+    print("gta:getOS2:")
+    local args = {...}
+    local count = 0
+    for k,v in pairs(args) do
+        count = count + 1
+        print("k,"..k.."v,"..tostring(v))
+    end
+    print("gta:getOS2:params count:"..count)
+
+    -- local arg = select("1", args)
+    -- print("args seq here:", #arg)
+
     return "ret from getOS2"
 end
 
-local function getOS3()
-    print("gta:getOS3")
+local function getOS3(...)
     return "ret from getOS3"
 end
 gta.getOS3 = getOS3
@@ -32,14 +47,20 @@ function gta.getOS4()
     -- local ttt = enum(t000)
     -- for ele in ttt do
     -- end
-    local t = {1, 2, 3}
+    local t = {"abc", "eee", nil, 3}
     print("-----xxxx:"..#t)
 
-    local tt = {5, 2, 3}
+    local tt = {5, 12, 3}
     print("-----xxxx:"..#tt)
 
-    local ttt = {1, 2, 6}
-    print("-----xxxx:"..#ttt)
+    local ttt = {[44]=2, [3]=5, [200]=3}
+    print("-----xxxx:"..#ttt.."---:")
+
+    local tttt = {[5]=2, [3]=5, [1]=3}
+    print("-----xxxx:"..#tttt.."---:")
+
+    local ttttt = {b=2, c=5, d=3}
+    print("-----xxxx:"..#ttttt.."---:")
 
     local html = [[
         <html>
@@ -50,6 +71,20 @@ function gta.getOS4()
         </html>
         ]]
     print(html)
+
+    local i
+    for i = 1, 10 do
+        print(i .. "\n")
+    end
+
+    local days = {} --= {"Suanday","Monday","Tuesday",3,"Wednesday","Thursday","Friday","Saturday"}
+    days[1] = "s"
+    days[2] = "ss"
+    days[3] = nil
+    days[4] = "ssss"  
+    -- local days = {[1]="aaaa", [3]="b", a="ccc"}
+    print("days count:"..#days.."first->")
+    for i,v in ipairs(days) do  print(v) end
 
     return "ret from getOS4"
 end
