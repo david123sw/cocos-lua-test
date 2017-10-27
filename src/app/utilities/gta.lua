@@ -233,7 +233,7 @@ cc.exports.gta_copy = {
 }
 gta_copy.c = 3
 
-[[
+--[[
     -- Meta class
     Shape = {area = 0}
     -- 基础类方法 new
