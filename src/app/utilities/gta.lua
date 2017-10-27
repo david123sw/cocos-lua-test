@@ -4,6 +4,13 @@ local gta = {} or gta
 gta.IS_DEBUG = true
 gta.APP_ENTRY_IP = "not defined"
 gta.APP_ENTRY_PORT = "not defined"
+gta.winSize = cc.Director:getInstance():getVisibleSize()
+gta.winCenter = cc.p(gta.winSize.width * 0.5, gta.winSize.height * 0.5)
+gta.anchorMiddleMode = cc.p(0.5, 0.5)
+
+function gta.assert(node)
+    assert(node ~= nil, "Load DisplayObject Failed, Stop")
+end
 
 function gta.convEnNum2CnNum(invalue)
     local size = #tostring(invalue)
