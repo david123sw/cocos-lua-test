@@ -5,6 +5,16 @@ gta.IS_DEBUG = true
 gta.APP_ENTRY_IP = "not defined"
 gta.APP_ENTRY_PORT = "not defined"
 
+function gta.convEnNum2CnNum(invalue)
+    local size = #tostring(invalue)
+    local cnNum = ""
+    local ref = {"一","二","三","四","五","六","七","八","九"}
+    for i = 1, size do
+        cnNum = cnNum .. ref[tonumber(string.sub(invalue, i, i))]
+    end
+    return cnNum
+end
+
 function gta:getOS(...)
     print("gta:getOS")
     local args = {...}
@@ -12,7 +22,49 @@ function gta:getOS(...)
     for k,v in pairs(args) do
         count = count + 1
     end
-    return "ret from getOSxxxx" .. count
+
+    local aaa = 3.0001
+    local bbb = 3
+    if aaa == bbb then
+        print("aaa == bbb")
+    else
+        print("aaa != bbb")
+    end
+
+    local b,e = string.find("Hello Lua user", "Lua%a, %d, %s, %l", 8)
+    gta.isMember()
+    print('find str ret:'..tostring(b).."--"..tostring(e))
+
+    print("--ccc--"..string.format("%#7.3f", 13))
+
+    print("change en to cn:", gta.convEnNum2CnNum(131234))
+
+    local tablemap = {["cc"] = "1", [2] = "b", a = "c"}
+    -- local tableconcat = table.concat(tablemap)
+    print("----after concat:", tableconcat)
+
+    local co = coroutine.create(function(a)
+        local r = coroutine.yield(a+1)
+        print("aaa:", r)
+    end)
+    local status,r = coroutine.resume(co, 1)
+    print('status:', status, "r:", r)
+    local status1,r1 = coroutine.resume(co, 100)
+    print('status1:', status1, "r1:", r1)
+
+    -- io.read("*a") io.read("*n") io.read.read("*|") io.close()
+    -- io.seek("end", -1) io.seek("set") io.seek("end")
+
+    -- collectgarbage("collect") collectgarbage("count")
+
+    assert(0 == 0, "not equal")
+    debug.debug()
+
+    return "ret from getOSxxxx" .. count .. "2mi3" .. tostring(2^3)
+end
+
+function gta.isMember()
+    print("call isMember")
 end
 
 gta.getOS2 = function(...)
@@ -180,3 +232,43 @@ cc.exports.gta_copy = {
     b = 2
 }
 gta_copy.c = 3
+
+[[
+    -- Meta class
+    Shape = {area = 0}
+    -- 基础类方法 new
+    function Shape:new (o,side)
+      o = o or {}
+      setmetatable(o, self)
+      self.__index = self
+      side = side or 0
+      self.area = side*side;
+      return o
+    end
+    -- 基础类方法 printArea
+    function Shape:printArea ()
+      print("面积为 ",self.area)
+    end
+    
+    -- 创建对象
+    myshape = Shape:new(nil,10)
+    myshape:printArea()
+    
+    Square = Shape:new()
+    -- 派生类方法 new
+    function Square:new (o,side)
+      o = o or Shape:new(o,side)
+      setmetatable(o, self)
+      self.__index = self
+      return o
+    end
+    
+    -- 派生类方法 printArea
+    function Square:printArea ()
+      print("正方形面积为 ",self.area)
+    end
+    
+    -- 创建对象
+    mysquare = Square:new(nil,10)
+    mysquare:printArea()
+]]
