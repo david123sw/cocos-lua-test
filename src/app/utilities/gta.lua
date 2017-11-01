@@ -2,10 +2,10 @@
 --http://www.runoob.com/lua/lua-data-types.html
 
 --lua actions ref
-http://www.cnblogs.com/kane0526/p/5924568.html
+--http://www.cnblogs.com/kane0526/p/5924568.html
 
 --c++ actions ref
-http://blog.csdn.net/arxi/article/details/31384865
+--http://blog.csdn.net/arxi/article/details/31384865
 
 local gta = {} or gta
 --const definitions
