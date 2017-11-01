@@ -1,6 +1,14 @@
 --refer url as following:
 --http://www.runoob.com/lua/lua-data-types.html
+
+--lua actions ref
+http://www.cnblogs.com/kane0526/p/5924568.html
+
+--c++ actions ref
+http://blog.csdn.net/arxi/article/details/31384865
+
 local gta = {} or gta
+--const definitions
 gta.IS_DEBUG = true
 gta.APP_ENTRY_IP = "not defined"
 gta.APP_ENTRY_PORT = "not defined"
@@ -8,9 +16,44 @@ gta.winSize = cc.Director:getInstance():getVisibleSize()
 gta.winCenter = cc.p(gta.winSize.width * 0.5, gta.winSize.height * 0.5)
 gta.anchorMiddleMode = cc.p(0.5, 0.5)
 
+--ccs event name(not used)
+gta.ccsEventName = gta.ccsEventName or {}
+gta.ccsEventName.TOUCH_BEGAN = 0
+gta.ccsEventName.TOUCH_MOVED = 1
+gta.ccsEventName.TOUCH_ENDED = 2
+gta.ccsEventName.TOUCH_CANCELLED = 3
+
+--node generic
 function gta.assert(node)
     assert(node ~= nil, "Load DisplayObject Failed, Stop")
 end
+
+function gta.adjustSceneDisplay(node)
+    -- gta.assert(node)
+    print("widSize:width:"..gta.winSize.width.."&height:"..gta.winSize.height)
+    node:setContentSize(gta.winSize)
+    ccui.Helper:doLayout(node)
+end
+
+function gta.countChildrenNodeNum(node)
+    gta.assert(node)
+    local children = node:getChildren()
+    local count = 0
+    for k,v in ipairs(children) do
+        count = count + 1
+    end
+    return count
+end
+
+function gta.sceneCleanUp(node)
+    -- gta.assert(node)
+    if node then
+    node:stopAllActions()
+    node:removeAllChildren()
+    node:removeFromParent()
+    end
+end
+--
 
 function gta.convEnNum2CnNum(invalue)
     local size = #tostring(invalue)
@@ -197,8 +240,10 @@ function gta.cclog(tag, ...)
         return parseString
     end
 
-    tag_ = tag_ .. ":" ..  tableParser(...)
-
+    if ... then
+        tag_ = tag_ .. ":" ..  tableParser(...)
+    end
+    
     -- local params = ... or ""
     -- local t_ = type(params)
     -- if "string" == t_ then
