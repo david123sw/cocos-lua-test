@@ -212,29 +212,34 @@ function gta.cclog(tag, ...)
         return size
     end
 
+    local recursiveCount = 0
     local function tableParser(invalue)
         local parseString = ""
         local params = invalue or ""
         local paramsType = type(params)
         local paramsSize = tableSize(invalue)
         local parseParamsCount = 0
+        recursiveCount = recursiveCount + 1
+        local recursiveTab = string.rep("\t", recursiveCount)
+        local recursiveReturn = string.rep("\r\n", recursiveCount - #recursiveTab + 1)
+        recursiveReturn = recursiveReturn .. recursiveTab
 
         if "string" == paramsType then
             parseString = "" .. params
         elseif "table" == paramsType then
-            local tmp = "{"
+            local tmp = "{\r\n"
             for k,v in pairs(params) do
                 parseParamsCount = parseParamsCount + 1
                 if "table" ~= type(v) then
-                    tmp = tmp .. tostring(k) .. ":" .. tostring(v)
+                    tmp = tmp .. recursiveTab .. tostring(k) .. " = " .. tostring(v)
                 else                
-                    tmp = tmp .. tostring(k) .. ":" .. tableParser(v)
+                    tmp = tmp .. recursiveTab .. tostring(k) .. " = " .. tableParser(v)
                 end
                 if paramsSize - 1 >= parseParamsCount then
-                    tmp = tmp .. ","
+                    tmp = tmp .. ",\r\n"
                 end
             end
-            parseString = parseString .. tmp .. "}"
+            parseString = parseString .. tmp .. recursiveReturn .. "}"
         end
 
         return parseString
