@@ -53,6 +53,18 @@ function gta.sceneCleanUp(node)
     node:removeFromParent()
     end
 end
+
+function gta.disableNodeZoomMode(root)
+    assert(root ~= nil)
+    local children = root:getChildren()
+    for k,v in ipairs(children) do
+        local generic = v:getDescription()
+        if "CheckBox" == generic or "Button" == generic or "RadioButton" == generic or "Slider" == generic then
+            v:setZoomScale(0)
+        end
+        disableNodeZoomMode(v)
+    end
+end
 --
 
 function gta.convEnNum2CnNum(invalue)
