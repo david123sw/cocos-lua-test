@@ -53,16 +53,18 @@ function gta.sceneCleanUp(node)
     node:removeFromParent()
     end
 end
-
-function gta.disableNodeZoomMode(root)
+-- defaultGenerics ===> {["CheckBox"] = true, ["Button"] = true]}
+-- excepts         ===> {["nameA"] = true, ["nameB"] = true, ["nameC"] = true}
+function gta.disableNodeZoomMode(root, excepts, defaultGenerics)
     assert(root ~= nil)
     local children = root:getChildren()
     for k,v in ipairs(children) do
         local generic = v:getDescription()
-        if "CheckBox" == generic or "Button" == generic or "RadioButton" == generic or "Slider" == generic then
+        local name = v:getName()
+        if nil ~= defaultGenerics[generic] and nil == excepts[name] then
             v:setZoomScale(0)
         end
-        disableNodeZoomMode(v)
+        disableNodeZoomMode(v, excepts, defaultGenerics)
     end
 end
 --
