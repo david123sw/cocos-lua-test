@@ -186,6 +186,48 @@ function SocketClient:sendMessage(msgTbl)
 	table.insert(self.sendMsgCache, msgToSend)
 end
 
+--  适配新新服务器协议
+function SocketClient:receiveMsgPack()
+    if nil ~= self.tcpConnection then
+        local recvContent, errorInfo = self.tcpConnection:receive()
+        print('conn receive:', recvContent or "nil", errorInfo or "nil")
+        if errorInfo ~= "closed" then
+            if recvContent then
+                print('recv:'..recvContent)
+            end
+        end
+    end
+end
+
+--  @msgTable   消息结构
+function SocketClient:sendMsgPack(msgTable)
+   gt.dump(msgTable)
+
+   local msgPackData = self.msgPackLib.pack(msgTable)
+   local msgLength = string.len(msgPackData)
+   local len = self:luaToCByShortEx(msgLength)
+   local cmd = self:luaToCByShortEx(msgTable[1])
+   local accountLen = self:luaToCByShortEx(msgTable[2])
+   local account = msgTable[3]
+   local sessionLen = self:luaToCByShortEx(msgTable[4])
+   local session = msgTable[5]
+   local msgToSend = len .. cmd .. accountLen .. account .. sessionLen .. session
+   table.insert(self.sendMsgCache, msgToSend)
+end
+
+function SocketClient:sendMsgPackEx(msgTable)
+   local msgPackData = self.msgPackLib.pack(msgTable)
+   local msgLength = string.len(msgPackData)
+   local len = self:luaToCByShortEx(msgLength)
+   local cmd = self:luaToCByShortEx(msgTable[1])
+   local accountLen = self:luaToCByShortEx(msgTable[2])
+   local account = msgTable[3]
+   local sessionLen = self:luaToCByShortEx(msgTable[4])
+   local session = msgTable[5]
+   local msgToSend = len .. cmd .. accountLen .. account .. sessionLen .. session
+   self.tcpConnection:send(msgToSend)
+end
+
 function SocketClient:getCheckSum(time, msgLength, msgPackData)
 	local crc = ""
 	local len = string.len(time) + msgLength

@@ -3,6 +3,10 @@ local MyApp = class("MyApp", cc.load("mvc").AppBase)
 
 require "app.utilities.gta"
 
+-- const definitions
+MyApp.resTags = MyApp.resTags or {}
+MyApp.resTags.defaultScene = "app/views/LoadingScene"
+
 function MyApp:onCreate()
     math.randomseed(os.time())
     print("vslog:gta:getOS:"..gta.getOS({a=3, b=5}, 3, 4, 56))
@@ -32,19 +36,40 @@ function MyApp:onCreate()
 
     -- begin my cocos app render
     cc.Director:getInstance():setDisplayStats(true)
+    cc.Director:getInstance():setAnimationInterval(1.0/40)
 
+    gta.cclog("app t:"..display.center.x)
+
+    print("print k,v test")
+    local sss = {a="a", b="b", c="c"}
+    for k,v in ipairs(sss) do
+    print("k,v"..k.."--"..v)
+	
+	--debug new protos
+--local ret = gt.socketClient:connect("192.168.36.87", 5678, true)
+--	local ret = gt.socketClient:connect("127.0.0.1", 12345, true)
+--	local msgToSend = {100,3,"abc",#"测试中文","测试中文"}
+--	gt.socketClient:sendMsgPack(msgToSend)
+--gt.socketClient:sendMsgPackEx()
+--	gt.socketClient:registerMsgListener(100, self, self.onRevLoginNotifier)
+	--debug new protos
+		
+    end
 end
 
--- function MyApp:run()
---     gta.cclog("running...")
--- end
+function MyApp:run()
+    gta.cclog("app running...")
 
--- function MyApp:onEnterBackground()
---     gta.cclog("enter background")
--- end
+    local loadingscene = require(MyApp.resTags.defaultScene):create(nil)
+    cc.Director:getInstance():replaceScene(loadingscene)
+end
 
--- function MyApp:onEnterForeground()
---     gta.cclog("enter foreground")
--- end
+ function MyApp:onEnterBackground()
+     gta.cclog("enter background")
+ end
+
+ function MyApp:onEnterForeground()
+     gta.cclog("enter foreground")
+ end
 
 return MyApp
