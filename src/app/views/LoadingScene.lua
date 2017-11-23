@@ -16,6 +16,7 @@ function LoadingScene:ctor(entryType)
     gta.assert(csbNode)
     csbNode:setAnchorPoint(gta.anchorMiddleMode)
     csbNode:setPosition(gta.winCenter)
+    gta.adjustSceneDisplay(csbNode)
     csbNode:addTo(self)
 end
 

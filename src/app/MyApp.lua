@@ -37,6 +37,10 @@ end
 
 -- function MyApp:run()
 --     gta.cclog("running...")
+
+--    local loadingScene = require("app/views/LoadingScene"):create(nil)
+--	cc.Director:getInstance():replaceScene(loadingScene)
+
 -- end
 
 -- function MyApp:onEnterBackground()

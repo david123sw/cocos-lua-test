@@ -19,6 +19,7 @@ function MainScene:ctor(entryType)
     -- cc.Label:createWithSystemFont("Hello World", "Arial", 40)
     -- :move(display.cx, display.cy + 200)
     -- :addTo(self)
+
     local scene = require("app/views/LoadingScene"):create(nil)
     gta.assert(scene)
     scene:addTo(self)
