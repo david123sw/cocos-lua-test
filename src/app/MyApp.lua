@@ -33,6 +33,31 @@ function MyApp:onCreate()
     -- begin my cocos app render
     cc.Director:getInstance():setDisplayStats(true)
 
+    local wsObj = cc.WebSocket:create("ws://192.168.36.229:8181")
+    gta.log("open wsObj now")
+    local function wsSend(msg)
+        wsObj:sendString("just from lua")
+    end
+
+    local function wsReceive(evt)
+        dump(evt)
+        gta.log("received data:"..evt)
+    end
+
+    local function wsClosed(evt)
+        wsObj = nil
+    end
+
+    local function wsError(evt)
+        gta.log("wsObj Error")
+    end
+
+    if nil ~= wsObj then
+        wsObj:registerScriptHandler(wsSend, cc.WEBSOCKET_OPEN)
+        wsObj:registerScriptHandler(wsReceive, cc.WEBSOCKET_MESSAGE)
+        wsObj:registerScriptHandler(wsClosed, cc.WEBSOCKET_CLOSE)
+        wsObj:registerScriptHandler(wsError, cc.WEBSOCKET_ERROR)
+    end
 end
 
 -- function MyApp:run()
