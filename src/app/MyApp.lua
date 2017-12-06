@@ -36,7 +36,7 @@ function MyApp:onCreate()
     local wsObj = cc.WebSocket:create("ws://192.168.36.229:8181")
     gta.log("open wsObj now")
     local function wsSend(msg)
-        wsObj:sendString("just from lua")
+        wsObj:sendString("User001")
     end
 
     local function wsReceive(evt)
