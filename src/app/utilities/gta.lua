@@ -343,3 +343,22 @@ gta_copy.c = 3
     mysquare = Square:new(nil,10)
     mysquare:printArea()
 ]]
+
+--            local excepts = {"PopDoubleRateCheck_1", "PopDoubleRateCheck_2", "PopDoubleRateCheck_3"}
+--            local validFlag = false
+--            for k,v in pairs(excepts) do
+--                local pt = sender:getTouchBeganPosition()
+--                local validItem1 = ccui.Helper:seekWidgetByName(bottom, v)
+--                local aabb = validItem1:getBoundingBox()
+--                local worldPt = validItem1:getParent():convertToNodeSpaceAR(pt)
+--                validFlag = cc.rectContainsPoint(aabb, worldPt)
+--                if validFlag then break end
+--            end
+
+--            if not validFlag then
+--                self.GameNiuNiuConfigs.DynamicStatusCollection.IsClickDoubleRate = false
+--                if self.GameNiuNiuConfigs.DisplayNodes.LayoutPopDoubleRateNode then self.GameNiuNiuConfigs.DisplayNodes.LayoutPopDoubleRateNode:setVisible(false) end
+--                ccui.Helper:seekWidgetByName(bottom, "Image_Pop"):setRotation(180)
+--            else
+--                panelTouchNode:setSwallowTouches(false)
+--            end
