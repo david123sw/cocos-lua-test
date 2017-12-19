@@ -362,3 +362,37 @@ gta_copy.c = 3
 --            else
 --                panelTouchNode:setSwallowTouches(false)
 --            end
+
+[[--addSpine : function() {
+        cc.director.purgeCachedData();
+        this.spineInst = sp.SkeletonAnimation("x.json", "x.atlas", 0.5);
+        this.spineInst.setPosition(cc.p(cc.winSize.width / 2, cc.winSize.height / 2));
+        this.spineInst.setAnimation(0, "x", false);
+        this.spineInst.setStartListener(function(evt){
+            cc.log("spineInst start");
+        });
+        var that = this;
+        this.spineInst.setEndListener(function (evt) {
+            cc.log("spineInst finish");
+            that.spineInst.removeFromParent(true);
+            that.spineInst = null;
+        });
+        this.spineInst.setCompleteListener(function(evt) {
+            cc.log("spineInst complete");
+        });
+        //this.spineInst.setAnimationListener(this, function(obj, trackIndex, type, event, loopCount) {
+        //    cc.log("spineInst All Listener" + type);
+        //    switch(type) {
+        //        case 0:
+        //            break;
+        //        case 1:
+        //            break;
+        //        case 2:
+        //            break;
+        //        case 3:
+        //            break;
+        //    }
+        //});
+        this.addChild(this.spineInst);
+    },
+--]]
