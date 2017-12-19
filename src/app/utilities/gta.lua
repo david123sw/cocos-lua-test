@@ -366,6 +366,8 @@ gta_copy.c = 3
 [[--addSpine : function() {
         cc.director.purgeCachedData();
         this.spineInst = sp.SkeletonAnimation("x.json", "x.atlas", 0.5);
+	//if encounter with errors,use
+	//sp.SkeletonAnimation.createWithJsonFile("x.json", "x.atlas", 0.5);
         this.spineInst.setPosition(cc.p(cc.winSize.width / 2, cc.winSize.height / 2));
         this.spineInst.setAnimation(0, "x", false);
         this.spineInst.setStartListener(function(evt){
