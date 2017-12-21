@@ -363,6 +363,15 @@ gta_copy.c = 3
 --                panelTouchNode:setSwallowTouches(false)
 --            end
 
+--    local listener = cc.EventListenerTouchOneByOne:create()
+--	listener:setSwallowTouches(false)
+--	listener:registerScriptHandler(handler(self, self.onTouchHandCardAreaBegan), cc.Handler.EVENT_TOUCH_BEGAN)
+--    listener:registerScriptHandler(handler(self, self.onTouchHandCardAreaMoved), cc.Handler.EVENT_TOUCH_MOVED)
+--	listener:registerScriptHandler(handler(self, self.onTouchHandCardAreaEned), cc.Handler.EVENT_TOUCH_ENDED)
+--	local eventDispatcher = self:getEventDispatcher()
+--    eventDispatcher:addEventListenerWithFixedPriority(listener, -1);
+--    self.handCardAreaListener = listener
+
 [[--addSpine : function() {
         cc.director.purgeCachedData();
         this.spineInst = sp.SkeletonAnimation("x.json", "x.atlas", 0.5);
