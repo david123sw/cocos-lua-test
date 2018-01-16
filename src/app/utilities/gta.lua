@@ -407,3 +407,11 @@ gta_copy.c = 3
         this.addChild(this.spineInst);
     },
 --]]
+--	#define USE_WIN32_CONSOLE
+--	
+--	#ifdef USE_WIN32_CONSOLE
+--	AllocConsole();
+--	freopen("CONIN$", "r", stdin);
+--	freopen("CONOUT$", "w", stdout);
+--	freopen("CONOUT$", "w", stderr);
+--	#endif
