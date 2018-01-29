@@ -415,3 +415,17 @@ gta_copy.c = 3
 --	freopen("CONOUT$", "w", stdout);
 --	freopen("CONOUT$", "w", stderr);
 --	#endif
+--
+--	open cocos androld log
+--	in cocos2d-x/cocos/Android.mk
+--	under -fexceptions
+--	LOCAL_CFLAGS += -DCOCOS2D_DEBUG=1 -DANDROID
+--
+--	in CCLuaStack.cpp
+--	mod lua_print()
+--	#ifdef ANDROID
+--		__android_log_print(ANDROID_LOG_DEBUG, "cocos2d-lua", "%s", t.c_str());
+--	#else
+--		CCLOG("[LUA-print] %s", t.c_str());
+--	#endif
+--
