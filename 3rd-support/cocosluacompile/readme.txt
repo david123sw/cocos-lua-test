@@ -1,0 +1,2 @@
+%NEWER_COCOS_VER%\cocos compile -p android -m release -ap=android-19 --lua-encrypt --lua-encrypt-key ???? --lua-encrypt-sign ???? --disable-compile
+%NEWER_COCOS_VER%\cocos luacompile -s src -d src2 -e -k ????-b ????--disable-compile
