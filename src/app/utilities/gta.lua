@@ -429,3 +429,80 @@ gta_copy.c = 3
 --		CCLOG("[LUA-print] %s", t.c_str());
 --	#endif
 --
+[[
+	function LoginScene:hasServerMaintainceNotice()
+    gt.showLoadingTips(gt.getLocationString("LTKey_0003"))
+
+    if self.xhr == nil then
+        self.xhr = cc.XMLHttpRequest:new()
+        self.xhr.timeout = 30 -- 设置超时时间
+    end
+    self.xhr.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+    local url = gt.SERVER_MAINTAIN_NOTICE
+    self.xhr:open("GET", url)
+    self.xhr:registerScriptHandler(function ()
+        if self.xhr.readyState == 4 and (self.xhr.status >= 200 and self.xhr.status < 207) then
+
+        gt.removeLoadingTips()
+
+        local bit = require("bit")
+        local function unicode_to_utf8(convertStr)
+            if type(convertStr)~="string" then
+                return convertStr
+            end
+
+            local resultStr=""
+                local i=1
+            while true do
+                local num1=string.byte(convertStr,i)
+                local unicode
+
+                if num1~=nil and string.sub(convertStr,i,i+1)=="\\u" then
+                    unicode=tonumber("0x"..string.sub(convertStr,i+2,i+5))
+                    i=i+6
+                elseif num1~=nil then
+                    unicode=num1
+                    i=i+1
+                else
+                    break
+                end
+
+                if unicode <= 0x007f then
+                    resultStr=resultStr..string.char(bit.band(unicode,0x7f))
+                elseif unicode >= 0x0080 and unicode <= 0x07ff then
+                    resultStr=resultStr..string.char(bit.bor(0xc0,bit.band(bit.rshift(unicode,6),0x1f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
+                elseif unicode >= 0x0800 and unicode <= 0xffff then
+                    resultStr=resultStr..string.char(bit.bor(0xe0,bit.band(bit.rshift(unicode,12),0x0f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(bit.rshift(unicode,6),0x3f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
+                end
+            end
+            resultStr=resultStr..'\0'
+            return resultStr
+        end
+
+        require("json")
+        local prepare, num = string.gsub(self.xhr.response, "\\", "\\\\")
+        local xhrParsedResp = json.decode(prepare)
+        gt.dump(xhrParsedResp)
+        self.serverNoticeTitle = 0 > #xhrParsedResp.title and unicode_to_utf8(xhrParsedResp.title) or ""
+        self.serverNoticeBody = 0 > #xhrParsedResp.body and unicode_to_utf8(xhrParsedResp.body) or ""
+        if 0 < #self.serverNoticeBody then
+            self.isServerShutdownOrMaintain = true
+        else
+            self.isServerShutdownOrMaintain = false
+        end
+        if self.isServerShutdownOrMaintain then
+		    self:showServerShutdownOrMaintainTips()
+        end
+
+        elseif self.xhr.readyState == 1 and self.xhr.status == 0 then
+            -- 网络问题,异常断开
+        end
+        self.xhr:unregisterScriptHandler()
+    end)
+    self.xhr:send()
+end
+]]
+
