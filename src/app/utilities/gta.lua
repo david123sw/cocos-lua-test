@@ -506,3 +506,22 @@ gta_copy.c = 3
 end
 ]]
 
+         <activity
+            android:name=".wxapi.WXEntryActivity"
+            android:exported="true"
+            android:label="@string/wx_api"
+            android:screenOrientation="portrait"
+            android:theme="@style/wxActivityTheme">
+        </activity>       <activity
+            android:name=".wxapi.WXEntryActivity"
+            android:exported="true"
+            android:label="@string/wx_api"
+            android:screenOrientation="portrait"
+            android:theme="@style/wxActivityTheme">
+        </activity>
+
+    <string name="app_name">上饶棋牌测试</string>
+    <string name="wx_api">WXEntryActivity</string>
+    <style name="wxActivityTheme" parent="@android:style/Theme">
+    	<item name="android:windowIsTranslucent">true</item>
+    </style>
