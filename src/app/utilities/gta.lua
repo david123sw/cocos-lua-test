@@ -525,3 +525,7 @@ end
     <style name="wxActivityTheme" parent="@android:style/Theme">
     	<item name="android:windowIsTranslucent">true</item>
     </style>
+
+            self.listViewRightChoice_niu_more_lv:setInnerContainerPosition(cc.p(0, offset + (-200) + (curIndex-1) * 50))
+            self.listViewRightChoice_niu_more_lv:refreshView()
+            self.listViewRightChoice_niu_more_lv:getInnerContainer():setPosition(cc.p(0, offset + (-200) + (curIndex-1) * 50))
