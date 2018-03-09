@@ -529,3 +529,20 @@ end
             self.listViewRightChoice_niu_more_lv:setInnerContainerPosition(cc.p(0, offset + (-200) + (curIndex-1) * 50))
             self.listViewRightChoice_niu_more_lv:refreshView()
             self.listViewRightChoice_niu_more_lv:getInnerContainer():setPosition(cc.p(0, offset + (-200) + (curIndex-1) * 50))
+
+
+            cc.utils:captureScreen(function(succeed, outputFile)  
+                   if succeed then  
+                     local winSize = cc.Director:getInstance():getWinSize()  
+                     local sp = cc.Sprite:create(outputFile)  
+                     self:addChild(sp, 0, 1000)  
+                     sp:setPosition(winSize.width / 2, winSize.height / 2)  
+                     sp:setScale(0.5) -- 显示缩放  
+                     print(outputFile)  
+                   else  
+                       cc.showTextTips("截屏失败")  
+                   end  
+            end, "resultscreenshot.png") 
+
+
+
