@@ -544,5 +544,30 @@ end
                    end  
             end, "resultscreenshot.png") 
 
-
+android-paste-&-enter
+		public void checkSystemClipboard() {
+		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", cbm.getText().toString());
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", this.getCompleteUrl(cbm.getText().toString()));
+		AppActivity.roomid = Uri.parse(this.getCompleteUrl(cbm.getText().toString())).getQueryParameter("roomid");
+	}
+	
+	public String getCompleteUrl(String text) {
+	    Pattern p = Pattern.compile("((http|ftp|https)://)(([a-zA-Z0-9\\._-]+\\.[a-zA-Z]{2,6})|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))(:[0-9]{1,4})*(/[a-zA-Z0-9\\&%_\\./-~-]*)?", Pattern.CASE_INSENSITIVE);
+	    Matcher matcher = p.matcher(text);
+	    matcher.find();
+	    return matcher.group();
+	}public void checkSystemClipboard() {
+		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", cbm.getText().toString());
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", this.getCompleteUrl(cbm.getText().toString()));
+		AppActivity.roomid = Uri.parse(this.getCompleteUrl(cbm.getText().toString())).getQueryParameter("roomid");
+	}
+	
+	public String getCompleteUrl(String text) {
+	    Pattern p = Pattern.compile("((http|ftp|https)://)(([a-zA-Z0-9\\._-]+\\.[a-zA-Z]{2,6})|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))(:[0-9]{1,4})*(/[a-zA-Z0-9\\&%_\\./-~-]*)?", Pattern.CASE_INSENSITIVE);
+	    Matcher matcher = p.matcher(text);
+	    matcher.find();
+	    return matcher.group();
+	}
 
