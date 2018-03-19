@@ -576,3 +576,136 @@ android-paste-&-enter
 	    return matcher.find() ? matcher.group() : "";
 	}
 
+
+	//copy android assets
+    public void copyAssetsFile(final String srcFile) {
+    	final File fs = new File(getFilesDir(), srcFile);
+    	Log.d(Constant.LOG_TAG, "fs manifest write path:" + fs);
+    	if(fs.exists())
+    	{
+    		Log.d(Constant.LOG_TAG, "fs manifest exist");
+    		return;
+    	}
+    	
+    	new Thread() {
+    		public void run() {
+    			Log.d(Constant.LOG_TAG, "manifest copy");
+    			try {
+    				AssetManager am = getAssets();
+    				InputStream is = am.open("res/" + srcFile);
+    				FileOutputStream fos = new FileOutputStream(fs);
+    				byte[] buffer = new byte[512];
+    				int len = 0;
+    				while((len=is.read(buffer)) != -1) {
+    					fos.write(buffer, 0, len);
+    				}
+    				fos.close();
+    				is.close();
+    			} catch (Exception e) {
+    				e.printStackTrace();
+    			}
+    		}
+    	}.start();
+    }
+
+    private void getAppVersion(){
+    	try {
+	    	PackageManager pm = this.getApplicationContext().getPackageManager();  
+	        PackageInfo pi = pm.getPackageInfo(this.getApplicationContext().getPackageName(), 0);  
+	        appVersion = pi.versionName; 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    
+	}
+
+
+//android recorder&playing
+public boolean startAudioRecording() {
+    	audioPrepath = audioPrepath + System.currentTimeMillis() + ".amr";
+    	File file = new File(audioPrepath);
+    	if(file.exists()) {
+    		if(file.delete())
+    		{
+    			try {
+    				file.createNewFile();
+    			}catch(IOException e) {
+    				e.printStackTrace();
+    			}
+    		}else {
+    			try {
+    				file.createNewFile();
+    			}catch(IOException e) {
+    				e.printStackTrace();
+    			}
+    		}
+    	}
+    	
+    	audioMR = new MediaRecorder();
+    	audioMR.setAudioSource(MediaRecorder.AudioSource.MIC);
+    	audioMR.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+    	audioMR.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+    	audioMR.setOutputFile(audioPrepath);
+    	audioMR.setMaxDuration(20000);
+    	
+    	try {
+    		audioMR.prepare();
+    	}catch(IOException e) {
+    		e.printStackTrace();
+    	}
+    	
+    	audioMR.start();
+    	mpBeginTm = System.currentTimeMillis();
+    	return true;
+    }
+    
+    public boolean stopAudioRecording() {
+    	if(null != audioMR) {
+    		mpEndTm = System.currentTimeMillis();
+    		audioMR.stop();
+    		audioMR.reset();
+    		audioMR.release();
+    		audioMR = null;
+    	}
+    	return true;
+    }
+    
+    public void playAudioRecording(final String extraUrl) {
+    	audioMP = new MediaPlayer();
+    	try {
+    		if("" != extraUrl) {
+    			audioMP.reset();
+    			audioMP.setDataSource(extraUrl);
+    			audioMP.setAudioStreamType(AudioManager.STREAM_MUSIC);
+    			audioMP.prepareAsync();
+    			audioMP.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+					
+					@Override
+					public void onPrepared(MediaPlayer mp) {
+						audioMP.start();
+					}
+				});
+    		}
+    		else {
+    			audioMP.setDataSource(audioPrepath);
+    			audioMP.prepare();
+    			audioMP.start();
+    		}
+    		audioMP.setVolume(1.0f, 1.0f);
+    	}catch(IOException e) {
+    		e.printStackTrace();
+    	}
+    }
+    
+    public void stopPlayAudioRecording() {
+    	if(null != audioMP) {
+    		audioMP.stop();
+    		audioMP.release();
+    		audioMP = null;
+    	}
+    }
+
+
+    //26 androi8.0
+sdkVerNum = Build.VERSION.SDK_INT;
+		is8SDK = sdkVerNum >= 26;
