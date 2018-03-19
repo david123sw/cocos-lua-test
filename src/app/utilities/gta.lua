@@ -547,9 +547,15 @@ end
 android-paste-&-enter
 		public void checkSystemClipboard() {
 		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", cbm.getText().toString());
-		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", this.getCompleteUrl(cbm.getText().toString()));
-		AppActivity.roomid = Uri.parse(this.getCompleteUrl(cbm.getText().toString())).getQueryParameter("roomid");
+		if(null != cbm.getText())
+		{
+			String linkUrl = this.getCompleteUrl(cbm.getText().toString());
+			if("" != linkUrl)
+			{
+				AppActivity.roomid = Uri.parse(linkUrl).getQueryParameter("roomid");
+				cbm.setText("");
+			}
+		}
 	}
 	
 	public String getCompleteUrl(String text) {
@@ -559,15 +565,14 @@ android-paste-&-enter
 	    return matcher.group();
 	}public void checkSystemClipboard() {
 		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", cbm.getText().toString());
-		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy:", this.getCompleteUrl(cbm.getText().toString()));
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxx:", cbm.getText().toString());
+		Log.d("xxxxxxxxxxxxxxxxxxxxxxxxxxx:", this.getCompleteUrl(cbm.getText().toString()));
 		AppActivity.roomid = Uri.parse(this.getCompleteUrl(cbm.getText().toString())).getQueryParameter("roomid");
 	}
 	
 	public String getCompleteUrl(String text) {
 	    Pattern p = Pattern.compile("((http|ftp|https)://)(([a-zA-Z0-9\\._-]+\\.[a-zA-Z]{2,6})|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))(:[0-9]{1,4})*(/[a-zA-Z0-9\\&%_\\./-~-]*)?", Pattern.CASE_INSENSITIVE);
 	    Matcher matcher = p.matcher(text);
-	    matcher.find();
-	    return matcher.group();
+	    return matcher.find() ? matcher.group() : "";
 	}
 
