@@ -723,3 +723,19 @@ NSString* parseUrlFromStr(NSString *string)
     }
     return NULL;
 }
+
+	local headSpr = gt.seekNodeByName(csbNode, "Spr_head")
+--	headSpr:removeFromParent(true)
+--	headSpr:setPosition(cc.p(0, 0))
+	--headSpr:setScale(81.0/96.0)
+	--头像遮罩
+--	local stencil = cc.Sprite:create("image/NiuNiu/play/avatar_shader.png")
+--	local clipper = cc.ClippingNode:create()
+--	clipper:setStencil(stencil)
+--	clipper:setInverted(true)
+--	clipper:setAlphaThreshold(0)
+--	local x, y = headFrameBtn:getPosition()
+--	local headFrameSize = headFrameBtn:getContentSize()
+--	clipper:setPosition(cc.p(headFrameSize.width / 2, headFrameSize.height / 2))
+--	clipper:addChild(headSpr)
+--	headFrameBtn:addChild(clipper)
