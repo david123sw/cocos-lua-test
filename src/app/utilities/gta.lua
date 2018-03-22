@@ -709,3 +709,17 @@ public boolean startAudioRecording() {
     //26 androi8.0
 sdkVerNum = Build.VERSION.SDK_INT;
 		is8SDK = sdkVerNum >= 26;
+
+NSString* parseUrlFromStr(NSString *string)
+{
+    NSError *error;
+    NSString *regularStr = @"((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|(www.[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)";
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:regularStr options:NSRegularExpressionCaseInsensitive error:&error];
+    NSArray *arrayOfAllMatches = [regex matchesInString:string options:0 range:NSMakeRange(0, [string length])];
+    for (NSTextCheckingResult *match in arrayOfAllMatches) {
+        NSString* substringForMatch = [string substringWithRange:match.range];
+        NSLog(@"isUrlType %@",substringForMatch);
+        return substringForMatch;
+    }
+    return NULL;
+}
