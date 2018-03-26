@@ -739,3 +739,5 @@ NSString* parseUrlFromStr(NSString *string)
 --	clipper:setPosition(cc.p(headFrameSize.width / 2, headFrameSize.height / 2))
 --	clipper:addChild(headSpr)
 --	headFrameBtn:addChild(clipper)
+--
+--svn diff --diff-cmd "diff" -x "-q" . | grep Index | cut -d " " -f 2
