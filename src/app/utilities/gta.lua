@@ -741,3 +741,8 @@ NSString* parseUrlFromStr(NSString *string)
 --	headFrameBtn:addChild(clipper)
 --
 --svn diff --diff-cmd "diff" -x "-q" . | grep Index | cut -d " " -f 2
+--
+--cuteftp 9.0 or universal reg
+--Name:1key.126.com
+--custom:1key
+--sn:AY6RP7E6V9DX37
