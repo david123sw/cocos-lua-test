@@ -1,0 +1,16 @@
+{
+	"packageUrl" : "http://????/hotupdate",
+	"remoteVersionUrl" : "http://????/hotupdate/version.manifest",
+	"remoteManifestUrl" : "http://????/hotupdate/project.manifest",
+	"version" : "1.0.1",
+	"engineVersion" : "Cocos2d-x v3.16",
+
+	"assets" : {
+		"res/font/???.font" : {
+			"path" : "ver1.0.1/res/font/???.font",
+			"md5" : "???"
+		}
+	},
+	"searchPaths" : [
+	]
+}

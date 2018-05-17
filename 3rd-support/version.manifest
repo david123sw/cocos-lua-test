@@ -1,0 +1,13 @@
+{
+	"packageUrl" : "http://????/hotupdate",
+	"remoteVersionUrl" : "http://????/hotupdate/version.manifest",
+	"remoteManifestUrl" : "http://????/hotupdate/project.manifest",
+	"version" : "1.0.1",
+	"appVerAnd" : "1.0.3",
+	"appVerIos" : "1.0.3",
+	"appUrlAnd" : "http://fir.im/ywsrqp1",
+	"appUrlIos" : "http://fir.im/ywsrqp2",
+	"reviewVer" : "100.0.0",
+	"revision" : "0000",
+	"engineVersion" : "Cocos2d-x v3.16"
+}
