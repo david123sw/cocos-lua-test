@@ -174,6 +174,8 @@ def Main():
         fop.write(cmdParams['svnToVer'])
         fop.write('\tdate: ')
         fop.write(time.ctime())
+		if True == cmdParams['release']:
+            fop.write('\trelease')
         fop.write('\r\n')
 
     # #test
