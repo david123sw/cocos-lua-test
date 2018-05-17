@@ -129,7 +129,7 @@ def Main():
         manifest2Json = json.loads(manifestFileData, 'utf-8')
 
     with codecs.open(r'' + workDirs + r'\project.manifest', 'w', 'utf-8') as fop:
-        manifest2Json[u'version'] = cmdParams['nextVersion']
+        manifest2Json[u'version'] = cmdParams['nextVersion'][3:]
         manifestAssets =  manifest2Json[u'assets']
 
         for file in allDiffFilePathAndMD5Dict:
@@ -156,7 +156,7 @@ def Main():
         manifest2Json2 = json.loads(manifestFileData2, 'utf-8')
 
     with codecs.open(r'' + workDirs + r'\version.manifest', 'w', 'utf-8') as fop:
-        manifest2Json2[u'version'] = cmdParams['nextVersion']
+        manifest2Json2[u'version'] = cmdParams['nextVersion'][3:]
         if True == cmdParams['release']:
             manifest2Json2[u'packageUrl'] = manifest2Json2[u'packageUrl'].replace(u'' + qaIPAddr, u'' + releaseIPAddr)
             manifest2Json2[u'remoteVersionUrl'] = manifest2Json2[u'remoteVersionUrl'].replace(u'' + qaIPAddr, u'' + releaseIPAddr)
