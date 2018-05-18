@@ -41,6 +41,16 @@ def dirsMD5Digest(dir, resultDescFile, diffFilesDesc):
                 diffFilesDesc['total'] += 1
                 fop.write(transFileRelPath)
                 fop.write('\n')
+				
+def bigFileMD5Digest(file):
+    digest = md5()
+    with codecs.open(file, 'rb') as fop:
+        buffer = 8192
+        while True:
+            chunk = fop.read(buffer)
+            if not chunk : break
+            digest.update(chunk)
+    return digest.hexdigest()
 
 def Main():
     #info
@@ -49,7 +59,14 @@ def Main():
     #101 svn结束版本号
     #ver1.0.15 下一个热更包版本号
     #release 默认可以不填是外网测试服，填了代表外网正式服
+	#svn check modified files and commit cmd:
+	#	svn st | grep "M" | cut -c 8->modified.txt
+	#	svn ci -m "log:just for test" --targets modified.txt
     #参数顺序不能乱
+	
+	if 4 > len(sys.argv):
+        print u"参数数至少4个, python run.py 100 101 ver1.0.1 [optional:release]"
+        return
 	
     cmdParams = {}
     cmdParams['svnFromVer'] = sys.argv[1]
@@ -114,13 +131,16 @@ def Main():
     print u"所有变动文件数目 " + str(validContentSplitsNum)
 
     print u"Step(3/5)代码加密"
-    os.rename(u'data\\src', u'data\\srcLua')
-    os.system(cocosCompileCmd)
-    time.sleep(2.5)
-    for file in allDiffFilePathAndMD5Dict:
-        if file[-5:] == '.luac':
-            allDiffFilePathAndMD5Dict[file] = fileMD5Digest(r'' + allDiffFilePathAndMD5Dict[file])
-    # print allDiffFilePathAndMD5Dict
+	if os.path.isdir(os.getcwd() + r'\data\src'):
+		os.rename(u'data\\src', u'data\\srcLua')
+		os.system(cocosCompileCmd)
+		time.sleep(2.5)
+		for file in allDiffFilePathAndMD5Dict:
+			if file[-5:] == '.luac':
+				allDiffFilePathAndMD5Dict[file] = fileMD5Digest(r'' + allDiffFilePathAndMD5Dict[file])
+		# print allDiffFilePathAndMD5Dict
+	else:
+		print ur"data\src文件夹不存在"
 
     print u"Step(4/5)更新project.manifest"
     manifest2Json = ''
