@@ -89,12 +89,12 @@ def Main():
     print u"更新包生成中..." + "\n[当前项目操作目录----------->" + projectDevDirs + "]"
     #info
 
-    print u"Step(1/5)开始获取更新文件"
+    print u"Step(1/6)开始获取更新文件"
     diffContent = os.popen(svnCmd).read()
     contentSplits = diffContent.split('\n')
     validContentSplitsNum = 0
 
-    print u"Step(2/5)计算文件MD5值"
+    print u"Step(2/6)计算文件MD5值"
     hasSvnRecordDeletedFiles = False
     allDiffFilePathAndMD5Dict = {}
     for path in contentSplits:
@@ -130,7 +130,7 @@ def Main():
     # print allDiffFilePathAndMD5Dict
     print u"所有变动文件数目 " + str(validContentSplitsNum)
 
-    print u"Step(3/5)代码加密"
+    print u"Step(3/6)代码加密"
 	if os.path.isdir(os.getcwd() + r'\data\src'):
 		os.rename(u'data\\src', u'data\\srcLua')
 		os.system(cocosCompileCmd)
@@ -142,7 +142,7 @@ def Main():
 	else:
 		print ur"data\src文件夹不存在"
 
-    print u"Step(4/5)更新project.manifest"
+    print u"Step(4/6)更新project.manifest"
     manifest2Json = ''
     with codecs.open(r'' + workDirs + r'\project.manifest', 'rb') as fop:
         manifestFileData =  fop.read()
@@ -169,7 +169,7 @@ def Main():
             manifest2Json[u'remoteManifestUrl'] = manifest2Json[u'remoteManifestUrl'].replace(u'' + qaIPAddr, u'' + releaseIPAddr)
         fop.write(json.dumps(manifest2Json))
 
-    print u"Step(5/5)更新version.manifest"
+    print u"Step(5/6)更新version.manifest"
     manifest2Json2 = ''
     with codecs.open(r'' + workDirs + r'\version.manifest', 'rb') as fop:
         manifestFileData2 =  fop.read()
@@ -186,6 +186,17 @@ def Main():
     if True == hasSvnRecordDeletedFiles:
         print u"****************************SVN上记录有文件已被删除****************************"
 
+	print u"Step(6/6)复制文件到指定文件夹以及更新日志"
+    outputHotfixDir = workDirs + u"\\" + cmdParams['nextVersion']
+    if not os.path.exists(outputHotfixDir):
+        os.makedirs(outputHotfixDir)
+    outDirsList = ['src', 'res']
+    for outDir in outDirsList:
+        fullOutDir = workDirs + u'\\' + outDir
+        print fullOutDir
+        if os.path.exists(fullOutDir):
+            shutil.copytree(fullOutDir, outputHotfixDir + u'\\' + outDir)
+			
     with codecs.open(os.getcwd() + u'\\' + updateLogFile, 'a+', 'utf-8') as fop:
         fop.write(cmdParams['nextVersion'])
         fop.write('\tsvn:from ')
