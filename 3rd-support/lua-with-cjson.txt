@@ -39,3 +39,6 @@ LOCAL_SRC_FILES := ../manual/CCLuaBridge.cpp \
           ../../../../external/xxtea/xxtea.cpp \
           ../auto/lua_cocos2dx_audioengine_auto.cpp \
           ../manual/audioengine/lua_cocos2dx_audioengine_manual.cpp
+		  
+3.local cjson = require("cjson")
+  local parsed = cjson.decode('{}')
