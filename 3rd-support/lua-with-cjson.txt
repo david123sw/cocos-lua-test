@@ -1,0 +1,41 @@
+cocos2d-lua use cjson
+1.frameworks\cocos2d-x\cocos\scripting\lua-bindings\manual\network\lua_extensions.c
+#include "cjson/lua_cjson.h"			/*added*/
+
+static luaL_Reg luax_exts[] = {
+    {"socket.core", luaopen_socket_core},
+    {"mime.core", luaopen_mime_core},
+	{"cjson", luaopen_cjson},			/*added*/
+    {NULL, NULL}
+};
+
+2.frameworks\cocos2d-x\cocos\scripting\lua-bindings\proj.android\Android.mk
+
+LOCAL_SRC_FILES := ../manual/CCLuaBridge.cpp \
+          ../manual/CCLuaEngine.cpp \
+          ../manual/CCLuaStack.cpp \
+          ../manual/CCLuaValue.cpp \
+          ../manual/Cocos2dxLuaLoader.cpp \
+          ../manual/LuaBasicConversions.cpp \
+          ../manual/lua_module_register.cpp \
+          ../auto/lua_cocos2dx_auto.cpp \
+          ../auto/lua_cocos2dx_physics_auto.cpp \
+          ../auto/lua_cocos2dx_experimental_auto.cpp \
+          ../manual/cocos2d/lua_cocos2dx_deprecated.cpp \
+          ../manual/cocos2d/lua_cocos2dx_experimental_manual.cpp \
+          ../manual/cocos2d/lua_cocos2dx_manual.cpp \
+          ../manual/cocos2d/lua_cocos2dx_physics_manual.cpp \
+          ../manual/cocos2d/LuaOpengl.cpp \
+          ../manual/cocos2d/LuaScriptHandlerMgr.cpp \
+          ../manual/tolua_fix.cpp \
+          ../../../../external/lua/tolua/tolua_event.c \
+          ../../../../external/lua/tolua/tolua_is.c \
+          ../../../../external/lua/tolua/tolua_map.c \
+          ../../../../external/lua/tolua/tolua_push.c \
+          ../../../../external/lua/tolua/tolua_to.c \
+		  ../../../../external/lua/cjson/fpconv.c \			/*added*/
+		  ../../../../external/lua/cjson/lua_cjson.c \			/*added*/
+		  ../../../../external/lua/cjson/strbuf.c \			/*added*/
+          ../../../../external/xxtea/xxtea.cpp \
+          ../auto/lua_cocos2dx_audioengine_auto.cpp \
+          ../manual/audioengine/lua_cocos2dx_audioengine_manual.cpp
