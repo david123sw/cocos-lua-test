@@ -98,10 +98,12 @@ def Main():
     hasSvnRecordDeletedFiles = False
     allDiffFilePathAndMD5Dict = {}
     for path in contentSplits:
-        if len(path) > 0:
+		print "svn:" + path
+		resIndex = path.find(r'/res')
+		srcIndex = path.find(r'/src')
+        if len(path) > 0 and (-1 < resIndex or -1 < srcIndex):
             validContentSplitsNum += 1
             realPath = path.replace(svnProjectDevDirs, projectDevDirs)
-            # print "svn:" + path
             realPath = realPath.replace(r'/', '\\')
             print "svn status:" + realPath[0]
             if 'D' == realPath[0]:
