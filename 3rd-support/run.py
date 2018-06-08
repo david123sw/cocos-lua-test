@@ -63,11 +63,11 @@ def Main():
 	#	svn st | grep "M" | cut -c 8->modified.txt
 	#	svn ci -m "log:just for test" --targets modified.txt
     #参数顺序不能乱
-	
-	if 4 > len(sys.argv):
-        print u"参数数至少4个, python run.py 100 101 ver1.0.1 [optional:release]"
+
+    if 4 > len(sys.argv):
+        print u"参数至少4个, python run.py 100 101 ver1.0.1 [optional:release]"
         return
-	
+
     cmdParams = {}
     cmdParams['svnFromVer'] = sys.argv[1]
     cmdParams['svnToVer'] = sys.argv[2]
@@ -98,9 +98,9 @@ def Main():
     hasSvnRecordDeletedFiles = False
     allDiffFilePathAndMD5Dict = {}
     for path in contentSplits:
-		print "svn:" + path
-		resIndex = path.find(r'/res')
-		srcIndex = path.find(r'/src')
+        print "svn:" + path
+        resIndex = path.find(r'/res')
+        srcIndex = path.find(r'/src')
         if len(path) > 0 and (-1 < resIndex or -1 < srcIndex):
             validContentSplitsNum += 1
             realPath = path.replace(svnProjectDevDirs, projectDevDirs)
@@ -115,25 +115,26 @@ def Main():
                 workFilePath, workFileName = os.path.split(workDirFilePath)
                 if not os.path.exists(workFilePath):
                     os.makedirs(workFilePath)
-                print u"复制文件 " + workFileName 
-                shutil.copyfile(realPath, workDirFilePath)
-                fileRelativePath = path.replace('M       ', '')
-                fileRelativePath = fileRelativePath.replace('A       ', '')
-                fileRelativePath = fileRelativePath.replace(svnProjectDevDirs + '/', '')
-                fileMD5Value = fileMD5Digest(r'' + workDirFilePath)
-                fileExt = os.path.splitext(r'' + workDirFilePath)
-                if ".lua" == fileExt[1]:
-                    changeName = fileRelativePath.replace(".lua", ".luac")
-                    allDiffFilePathAndMD5Dict[changeName] = workDirFilePath.replace('.lua', '.luac')
-                else:
-                    allDiffFilePathAndMD5Dict[fileRelativePath] = fileMD5Value
-                print "local: " + workDirFilePath
-                print "md5: " + fileMD5Value
+                print u"复制文件 " + workFileName
+                if os.path.isfile(realPath): 
+                    shutil.copyfile(realPath, workDirFilePath)
+                    fileRelativePath = path.replace('M       ', '')
+                    fileRelativePath = fileRelativePath.replace('A       ', '')
+                    fileRelativePath = fileRelativePath.replace(svnProjectDevDirs + '/', '')
+                    fileMD5Value = fileMD5Digest(r'' + workDirFilePath)
+                    fileExt = os.path.splitext(r'' + workDirFilePath)
+                    if ".lua" == fileExt[1]:
+                        changeName = fileRelativePath.replace(".lua", ".luac")
+                        allDiffFilePathAndMD5Dict[changeName] = workDirFilePath.replace('.lua', '.luac')
+                    else:
+                        allDiffFilePathAndMD5Dict[fileRelativePath] = fileMD5Value
+                    print "local: " + workDirFilePath
+                    print "md5: " + fileMD5Value
     # print allDiffFilePathAndMD5Dict
     print u"所有变动文件数目 " + str(validContentSplitsNum)
 
     print u"Step(3/6)代码加密"
-	if os.path.isdir(os.getcwd() + r'\data\src'):
+    if os.path.isdir(os.getcwd() + r'\data\src'):
 		os.rename(u'data\\src', u'data\\srcLua')
 		os.system(cocosCompileCmd)
 		time.sleep(2.5)
@@ -141,7 +142,7 @@ def Main():
 			if file[-5:] == '.luac':
 				allDiffFilePathAndMD5Dict[file] = fileMD5Digest(r'' + allDiffFilePathAndMD5Dict[file])
 		# print allDiffFilePathAndMD5Dict
-	else:
+    else:
 		print ur"data\src文件夹不存在"
 
     print u"Step(4/6)更新project.manifest"
@@ -207,7 +208,7 @@ def Main():
         fop.write(cmdParams['svnToVer'])
         fop.write('\tdate: ')
         fop.write(time.ctime())
-		if True == cmdParams['release']:
+        if True == cmdParams['release']:
             fop.write('\trelease')
         fop.write('\r\n')
 
