@@ -73,7 +73,7 @@ function DragonBoneCreator:disposeDB(targetNode)
     dbConfig._armatureDisplay:removeFromParent()
 
 --    db.CCFactory:getInstance():clear()
-    dbInst:removeDragonBonesData(dbConfig.dbData.skeDataPath)
+    db.CCFactory:getInstance():removeDragonBonesData(dbConfig.dbData.skeDataPath)
 end
 
 return DragonBoneCreator
