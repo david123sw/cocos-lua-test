@@ -52,6 +52,16 @@ function DragonBoneCreator:ctor(dbData)
     DragonBoneCreator.cacheDBObjs[dbData.targetNode] = dbConfig
 end
 
+function DragonBoneCreator:stop(targetNode)
+    gt.log("*************************DragonBoneCreator:stop*************************")
+    if nil == targetNode or nil == DragonBoneCreator.cacheDBObjs[targetNode] then
+        return
+    end
+
+    local dbConfig = DragonBoneCreator.cacheDBObjs[targetNode]
+    dbConfig._armatureDisplay:getAnimation():stop(dbConfig.dbData.animationName)
+end
+
 function DragonBoneCreator:disposeDB(targetNode)
     gt.log("*************************DragonBoneCreator:disposeDB*************************")
     if nil == targetNode or nil == DragonBoneCreator.cacheDBObjs[targetNode] then
@@ -61,7 +71,9 @@ function DragonBoneCreator:disposeDB(targetNode)
     local dbConfig = DragonBoneCreator.cacheDBObjs[targetNode]
     dbConfig._armatureDisplay:getAnimation():stop(dbConfig.dbData.animationName)
     dbConfig._armatureDisplay:removeFromParent()
-    DragonBoneCreator.cacheDBObjs[targetNode] = nil
+
+--    db.CCFactory:getInstance():clear()
+    dbInst:removeDragonBonesData(dbConfig.dbData.skeDataPath)
 end
 
 return DragonBoneCreator
