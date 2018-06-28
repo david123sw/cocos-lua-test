@@ -8,6 +8,7 @@ local DragonBoneCreator = class("DragonBoneCreator")
 DragonBoneCreator.DEFAULT_SCALE = 0.618
 DragonBoneCreator.DEFUALT_POSITION = cc.p(0, 0)
 DragonBoneCreator.DEFUALT_ARMATURE_NAME = "armatureDisplay"
+DragonBoneCreator.DEFAULT_SPEED = 0.5
 DragonBoneCreator.cacheDBObjs = DragonBoneCreator.cacheDBObjs or {}
 
 --[[----        self._armatureDisplay:bindDragonEventListener(handler(self,self._animationEventHandler))
@@ -42,10 +43,11 @@ function DragonBoneCreator:ctor(dbData)
     dbConfig._dragonBonesData = dbConfig._dbFactory:loadDragonBonesData(dbData.skeDataPath)
     dbConfig._dbFactory:loadTextureAtlasData(dbData.texDataPath)
     dbConfig._armatureDisplay = dbConfig._dbFactory:buildArmatureDisplay(dbData.armatureName)
+	dbConfig._armatureDisplay.timeScale = DragonBoneCreator.DEFAULT_SPEED
     dbConfig._armatureDisplay:setPosition(DragonBoneCreator.DEFUALT_POSITION)
     dbConfig._armatureDisplay:setScale(DragonBoneCreator.DEFAULT_SCALE)
     dbConfig._armatureDisplay:setName(DragonBoneCreator.DEFUALT_ARMATURE_NAME)
-    dbConfig._armatureDisplay:getAnimation():play(dbData.animationName)
+    dbConfig._armatureDisplay:getAnimation():play(dbData.animationName).timeScale = DragonBoneCreator.DEFAULT_SPEED
     dbData.targetNode:addChild(dbConfig._armatureDisplay)
     dbConfig.dbData = dbData
 
