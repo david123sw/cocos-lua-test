@@ -116,7 +116,10 @@ def Main():
                 if not os.path.exists(workFilePath):
                     os.makedirs(workFilePath)
                 print u"复制文件 " + workFileName
-                if os.path.isfile(realPath): 
+                ignoreFramework = path.find(r'/frameworks')
+                if -1 < ignoreFramework:
+                    print u"忽略该文件 " + realPath
+                if os.path.isfile(realPath) and (-1 == ignoreFramework):
                     shutil.copyfile(realPath, workDirFilePath)
                     fileRelativePath = path.replace('M       ', '')
                     fileRelativePath = fileRelativePath.replace('A       ', '')
