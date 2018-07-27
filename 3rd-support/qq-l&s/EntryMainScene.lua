@@ -33,7 +33,8 @@ EntryMainScene.CONSTANTS = {
         RULE                = 17,
         GUILD               = 18,
         SHOP                = 19,
-        ACTIVITY            = 20
+        ACTIVITY            = 20,
+        INVITE_SHARE        = 21
     }
 }
 
@@ -187,10 +188,11 @@ function EntryMainScene:initDisplay()
     gt.addBtnPressedListener(self.disObjs.btnMatch, function (target, event)
         gt.log("click match")
         require("app/views/CommonTips"):create(gt.getLocationString("LTKey_0063"))
-       local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
-       local title = "吆玩桂林字牌"
-       local url = gt.shareWeb
-       local previewImgUrl = "http://"..gt.LoginServer.ip.."/yaowangl/hotupdate/appIcons/Icon-120.png"
+        
+        local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
+        local title = "吆玩桂林字牌"
+        local url = gt.shareWeb
+        local previewImgUrl = "http://"..gt.LoginServer.ip.."/yaowangl/hotupdate/default_icons/Icon-120.png"
         --    extension.qqShareMsg({title=title, description=description, url=url, previewImgUrl=previewImgUrl}, function(resp)
         --        gt.dump(resp, "qqShareMsg")
         --    end)
@@ -199,10 +201,64 @@ function EntryMainScene:initDisplay()
         --     gt.dump(resp, "qqShareMsg")
         -- end)
 
-        local writePath = cc.FileUtils:getInstance():getWritablePath()
-        extension.qqShareMsg({title=title, description=description, image="res/images/btn_chi.png", absoluteImage=writePath.."res/images/img_ready.png"}, function(resp)
-            gt.dump(resp, "qqShareMsg")
-        end)
+--        local writePath = cc.FileUtils:getInstance():getWritablePath()
+--        extension.qqShareMsg({title=title, description=description, image="res/images/btn_chi.png", absoluteImage=writePath.."res/images/img_ready.png"}, function(resp)
+--            gt.dump(resp, "qqShareMsg")
+--        end)
+
+--        extension.getQQLogin(function (respJson)
+--            if gt.isAndroidPlatform() then
+--                gt.dump(respJson, "getQQLogin callback")
+--                local qqRet = respJson
+--                if 1 == qqRet.status then
+--                    gt.log("qqRet status is 1")
+--                    local userInfo = string.split(qqRet.code, "|")
+--                    gt.log("userInfoStr pair count:"..table.nums(userInfo))
+--                    local transUserInfo = {}
+--                    for i=1, #userInfo-1, 2 do
+--                        transUserInfo[userInfo[i]] = userInfo[i+1]
+--                    end
+--                    gt.dump(transUserInfo, "-----------????????????????--------------")
+--                elseif 0 == qqRet.status then
+--                    gt.log("qqRet status is 0, error")
+--                end
+--            elseif gt.isIOSPlatform() then
+--                 local qqRet = respJson
+--                 if "0" ~= qqRet.detailRetCode and "0" ~= qqRet.retCode then
+--                     gt.log("detailRetCode:"..detailRetCode)
+--                     gt.removeLoadingTips()
+--                     require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), gt.getLocationString("LTKey_0090"), nil, nil, true)
+--                     return
+--                 else
+--                     local parsedMsg = cjson.decode(qqRet.message)
+--                     local user_id = ""
+--                     local union_id = ""
+--                     local openid = "qq_"..qqRet.openId
+--                     local access_token = parsedMsg.accessToken
+--                     local refresh_token = ""
+--                     local icon = parsedMsg.figureurl_2
+--                     local nick = parsedMsg.nickname
+--                     local sex = parsedMsg.gender == "男" and 1 or 2
+--                     local location = parsedMsg.city
+
+--                     self:getRealLoginPrepare(access_token, refresh_token, openid, sex, nick, icon, union_id)
+--                 end
+--            end
+--        end)
+
+--        android
+--        extension.qqShareMsg({text="just for test qq share"}, function(resp)
+--            gt.dump(resp, "qqShareMsg")
+--        end)
+
+--          extension.qqShareMsg({title=title, description=description, url=url, previewImgUrl=previewImgUrl}, function(resp)
+--              gt.dump(resp, "qqShareMsg")
+--          end)
+
+--        local writePath = cc.FileUtils:getInstance():getWritablePath()
+--        extension.qqShareMsg({absoluteImage=writePath.."res/image/scr.png"}, function(resp)
+--            gt.dump(resp, "qqShareMsg")
+--        end)
     end)
 
     self.disObjs.btnExperience = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "btnExperience")
@@ -334,11 +390,22 @@ function EntryMainScene:initDisplay()
     --新界面UI
     self.disObjs.imgGuildInfoNew = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "imgGuildInfoNew")
     self.disObjs.imgGuildInfoNew:setVisible(false)
+
     self.disObjs.layoutRoomMenuNew = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "layoutRoomMenuNew")
     self.disObjs.layoutRoomMenuNew:setSwallowTouches(false)
     self.disObjs.layoutRoomMenuNew:setVisible(false)
     self.disObjs.imgBottomMenusNew = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "imgBottomMenusNew")
     self.disObjs.imgBottomMenusNew:setVisible(false)
+
+    self.disObjs.layoutLightNode = ccui.Helper:seekWidgetByName(self.disObjs.layoutRoomMenuNew, "layoutLightNode")
+    require("app/DragonBoneCreator"):create({
+    skeDataPath="effects/main2Light/eff_main2_light_ske.json",
+    texDataPath="effects/main2Light/eff_main2_light_tex.json",
+    armatureName="armatureName",
+    animationName="newAnimation",
+    armatureSpeed=0.50,
+    armatureScale=1,
+    targetNode=self.disObjs.layoutLightNode})
 
     self.disObjs.imgSwitcherGuild = ccui.Helper:seekWidgetByName(self.disObjs.imgGuildInfoNew, "imgSwitcherGuild")
     self.disObjs.imgSwitcherGuildDesc = ccui.Helper:seekWidgetByName(self.disObjs.imgGuildInfoNew, "imgSwitcherGuildDesc")
@@ -355,6 +422,7 @@ function EntryMainScene:initDisplay()
     self.disObjs.imgSwitcherGuild:setTouchEnabled(true)
     self.disObjs.imgSwitcherGuild:addTouchEventListener(function (target, event)
         if TOUCH_EVENT_ENDED == event then
+            local listCount = #self.disObjs.lvItemsNew:getItems()
             if true == self.dymAttrs.noneGuildCreated then
                 local preEnterGuild = require("app/views/PreEnterGuild"):create({parent=self, zOrder=EntryMainScene.CONSTANTS.ZOrder.GUILD})
 		        self:addChild(preEnterGuild, EntryMainScene.CONSTANTS.ZOrder.GUILD)
@@ -385,10 +453,13 @@ function EntryMainScene:initDisplay()
     self.disObjs.lvItemsNewItem = self.disObjs.lvItemsNew:getItem(0)
     self.disObjs.lvItemsNewItem:retain()
     self.disObjs.lvItemsNew:removeAllChildren()
-    if nil ~= gt.noneGuildRoomsCreated then
-        self.disObjs.imgNoInfoTip:setVisible(gt.noneGuildRoomsCreated)
-        self.disObjs.imgLittleGirl:setVisible(gt.noneGuildRoomsCreated)
-    end
+--    if nil ~= gt.noneGuildRoomsCreated then
+--        self.disObjs.imgNoInfoTip:setVisible(gt.noneGuildRoomsCreated)
+--        self.disObjs.imgLittleGirl:setVisible(gt.noneGuildRoomsCreated)
+--    end
+    --统一默认不显示
+    self.disObjs.imgNoInfoTip:setVisible(false)
+    self.disObjs.imgLittleGirl:setVisible(false)
 
     self.disObjs.btnGoldRoomNew = ccui.Helper:seekWidgetByName(self.disObjs.layoutRoomMenuNew, "btnGoldRoomNew")
     gt.addBtnPressedListener(self.disObjs.btnGoldRoomNew, function (target, event)
@@ -664,7 +735,12 @@ function EntryMainScene:onGuildInfoNewRespond(msgTbl)
                 roomInfo.roomid = data.room_id
                 roomInfo.curPlayerNum = data.cur_player_count
                 roomInfo.club = "club"
-                gt.shareZipaiRoomInfo(roomInfo)
+--                替换原始只有微信分享
+--                gt.shareZipaiRoomInfo(roomInfo)
+                local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
+		        local title = "吆玩桂林字牌"
+                local shareScene = require("app/views/ShareScene"):create({description=description, title=title, url=gt.shareWeb, roomInfo=roomInfo})
+		        self:addChild(shareScene, EntryMainScene.CONSTANTS.ZOrder.INVITE_SHARE)
             end)
             copy:setTouchEnabled(true)
             copy:addTouchEventListener(function (target, event)
@@ -761,7 +837,9 @@ function EntryMainScene:onMainSceneStyleUpdated(event, data)
             self.disObjs.btnCreateRoom:setVisible(true)
             self.disObjs.btnJoinRoom:setVisible(true)
             self.disObjs.btnGuild:setVisible(true)
-            self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME):setVisible(true)
+            if nil ~= self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME) then
+                self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME):setVisible(true)
+            end
             self.disObjs.btnExperience:setVisible(true)
             self.disObjs.btnAccountAuthorized:setVisible(true)
             self.disObjs.btnInvite:setVisible(true)
@@ -778,7 +856,9 @@ function EntryMainScene:onMainSceneStyleUpdated(event, data)
             self.disObjs.btnCreateRoom:setVisible(false)
             self.disObjs.btnJoinRoom:setVisible(false)
             self.disObjs.btnGuild:setVisible(false)
-            self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME):setVisible(false)
+            if nil ~= self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME) then
+                self.disObjs.layoutNode:getChildByName(require("app/DragonBoneCreator").DEFUALT_ARMATURE_NAME):setVisible(false)
+            end
             self.disObjs.btnExperience:setVisible(false)
             self.disObjs.btnAccountAuthorized:setVisible(false)
             self.disObjs.btnInvite:setVisible(false)
@@ -1028,6 +1108,8 @@ function EntryMainScene:onRcvEnterGame(msgTbl)
 		gt.removeTargetAllEventListener(self)
         if msgTbl.game_type == gt.GameType.GAME_GLZP then
             --require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), "创建房间成功，等待添加房间UI", nil, nil, true)
+            require("app/DragonBoneCreator").cacheDBObjs = {}
+            db.CCFactory:getInstance():clear()
             local gameScene =  require("app/views/GuilinZipaiScene"):create(msgTbl)
             cc.Director:getInstance():replaceScene(gameScene)
         else

@@ -56,7 +56,6 @@ extension.callBackHandler = {}--保存回调函数
 -- 提供java 和 oc回调
 cc.exports.extension_callback = function(jsonObj)
 	dump(jsonObj)
-	require("json")
     local cjson = require("cjson")
     local respJson = cjson.decode(tostring(jsonObj))
 	dump(respJson)
@@ -270,7 +269,7 @@ extension.isInstallWeiXin = function()
 end
 
 
---分享图片
+--分享图片???
 extension.shareToImage = function(shareTo, filePath)
     if(not extension.isInstallWeiXin())then
         gt.log("非微信登录无法分享")
@@ -279,7 +278,7 @@ extension.shareToImage = function(shareTo, filePath)
     if ( gt.isIOSPlatform() ) then
         extension.luaBridge.callStaticMethod("wxlogin",
             "sendImageContent",
-            {shareTo = shareTo}
+            {shareTo = shareTo, filePath = filePath}
 			)
     elseif (gt.isAndroidPlatform()) then
         extension.luaBridge.callStaticMethod(
@@ -318,6 +317,7 @@ extension.shareToURL = function(shareTo, title, message, url, call_back)
 end
 
 --获取QQ登录
+--ios android 对于返回的json解析不一样,特别注意一下
 extension.getQQLogin = function (call_back)
     if (not call_back) then
         gt.log("error getQQLogin need a call_back")
@@ -326,13 +326,13 @@ extension.getQQLogin = function (call_back)
 
     extension.callBackHandler[extension.qq_login] = call_back --注册回调函数
     if(gt.isAndroidPlatform()) then
-        gt.log("extension.getQQLogin android:目前android暂未添加")
---        extension.luaBridge.callStaticMethod(
---            APIClass,
---            'getWeixinToken',
---			{gt.wxId},
---            '(Ljava/lang/String;)V'
---        )
+        gt.log("extension.getQQLogin android")
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'requestQQLogin',
+			{gt.qqAPPID},
+            '(Ljava/lang/String;)V'
+        )
     elseif (gt.isIOSPlatform()) then
         gt.log("extension.getQQLogin ios");
         extension.luaBridge.callStaticMethod(
@@ -711,9 +711,12 @@ extension.saveImageToGallery = function (srcPath)
 end
 
 --QQ分享
+--ios
 --link--->{title=title, description=description, url=url, previewImgUrl=previewImgUrl}
 --text--->{text=text}
 --image-->{image=image, title=title, description=description, absoluteImage=absoluteImage}
+--android
+--第6个参数是发文字的appIcon预览，无需变动
 extension.qqShareMsg = function (msgDict, call_back)
     if(not call_back) then
         gt.log("qqShareMsg can set a call_back")
@@ -721,12 +724,38 @@ extension.qqShareMsg = function (msgDict, call_back)
     extension.callBackHandler[extension.qq_share] = call_back --注册回调函数
 
     if gt.isAndroidPlatform() then
-        -- ok, text = extension.luaBridge.callStaticMethod(
-        --      APIClass,
-        --      'copyImageToGallery',
-		--     {tostring(srcPath)},
-        --     '(Ljava/lang/String;)V'
-        --  )
+        extension.getQQLogin(function (respJson)
+            gt.dump(respJson, "getQQLogin callback")
+            local qqRet = respJson
+            if 1 == qqRet.status then
+                local userInfo = string.split(qqRet.code, "|")
+                local transUserInfo = {}
+                for i=1, #userInfo-1, 2 do
+                    transUserInfo[userInfo[i]] = userInfo[i+1]
+                end
+                if "0" ~= transUserInfo.ret then
+                    gt.log("detailRetCode:"..transUserInfo.ret)
+                    require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), gt.getLocationString("LTKey_0090"), nil, nil, true)
+                    return
+                else
+                    gt.openQQShare = true
+                    extension.luaBridge.callStaticMethod(
+                        APIClass,
+                        'qqShareMsg',
+			            {msgDict.text == nil and "" or msgDict.text, 
+                        msgDict.absoluteImage == nil and "" or msgDict.absoluteImage,
+                        msgDict.title == nil and "" or msgDict.title, 
+                        msgDict.description == nil and "" or msgDict.description, 
+                        msgDict.url == nil and "" or msgDict.url, 
+                        msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl,
+                        msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl},
+                        '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
+                    )
+                end
+            elseif 0 == qqRet.status then
+                gt.log("qqRet status is 0, error")
+            end
+       end)
     elseif (gt.isIOSPlatform()) then
         extension.getQQLogin(function (respJson)
            local qqRet = respJson
