@@ -71,9 +71,19 @@ function DragonBoneCreator:disposeDB(targetNode)
     local dbConfig = DragonBoneCreator.cacheDBObjs[targetNode]
     dbConfig._armatureDisplay:getAnimation():stop(dbConfig.dbData.animationName)
     dbConfig._armatureDisplay:removeFromParent()
-
---    db.CCFactory:getInstance():clear()
+	--???
     db.CCFactory:getInstance():removeDragonBonesData(dbConfig.dbData.skeDataPath)
+end
+
+function DragonBoneCreator:disposeAllDBs()
+    gt.log("*************************DragonBoneCreator:disposeAllDBs*************************")
+    for k,v in pairs(DragonBoneCreator.cacheDBObjs) do
+        local dbConfig = v
+        dbConfig._armatureDisplay:getAnimation():stop(dbConfig.dbData.animationName)
+        dbConfig._armatureDisplay:removeFromParent()
+    end
+    db.CCFactory:getInstance():clear()
+    DragonBoneCreator.cacheDBObjs = {}
 end
 
 return DragonBoneCreator
