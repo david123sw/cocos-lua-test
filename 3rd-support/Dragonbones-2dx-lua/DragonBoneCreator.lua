@@ -9,6 +9,7 @@ DragonBoneCreator.DEFAULT_SCALE = 0.618
 DragonBoneCreator.DEFUALT_POSITION = cc.p(0, 0)
 DragonBoneCreator.DEFUALT_ARMATURE_NAME = "armatureDisplay"
 DragonBoneCreator.DEFAULT_SPEED = 0.5
+DragonBoneCreator.DEFAULT_ROTATION = 0
 DragonBoneCreator.cacheDBObjs = DragonBoneCreator.cacheDBObjs or {}
 
 --[[----        self._armatureDisplay:bindDragonEventListener(handler(self,self._animationEventHandler))
@@ -45,7 +46,8 @@ function DragonBoneCreator:ctor(dbData)
     dbConfig._armatureDisplay = dbConfig._dbFactory:buildArmatureDisplay(dbData.armatureName)
     dbConfig._armatureDisplay:setPosition(dbData.armaturePos and dbData.armaturePos or DragonBoneCreator.DEFUALT_POSITION)
     dbConfig._armatureDisplay:setScale(dbData.armatureScale and dbData.armatureScale or DragonBoneCreator.DEFAULT_SCALE)
-    dbConfig._armatureDisplay:setName(DragonBoneCreator.DEFUALT_ARMATURE_NAME)
+	dbConfig._armatureDisplay:setRotation(dbData.armatureRotation and dbData.armatureRotation or DragonBoneCreator.DEFAULT_ROTATION)
+    dbConfig._armatureDisplay:setName(dbData.armatureObjName and dbData.armatureObjName or DragonBoneCreator.DEFUALT_ARMATURE_NAME)
     dbConfig._armatureDisplay:getAnimation():play(dbData.animationName).timeScale = dbData.armatureSpeed and dbData.armatureSpeed or DragonBoneCreator.DEFAULT_SPEED
     dbData.targetNode:addChild(dbConfig._armatureDisplay)
     dbConfig.dbData = dbData
