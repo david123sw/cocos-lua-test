@@ -1,0 +1,43 @@
+-----
+        local function printMetaTableFun(t)
+ 
+            local rs_tb={}
+ 
+            local function tmp(t)
+                if t then
+                    for _val, _val_type in pairs(t) do
+                        if type(_val_type)~="userdata" then 
+                            if not string.find(_val,"_") then                   
+                                table.insert(rs_tb,_val)
+                            end      
+                        end
+                    end
+                    local ft=getmetatable(t)
+                    if ft then
+                        tmp(ft)    
+                    end          
+                end
+            end
+            tmp(getmetatable(t))
+ 
+            table.sort(rs_tb) 
+            local rs_str=""
+            for i=1,#rs_tb do
+                rs_str=rs_str .. rs_tb[i] .. "\n"
+            end
+ 
+            print(rs_str)
+        end
+        -----
+
+        printMetaTableFun(target)
+		
+		--    self.dymAttrs.keyListener = cc.EventListenerKeyboard:create()
+--    self.dymAttrs.keyListener:registerScriptHandler(function(key, event)
+--        if key == 35 or key == 164 then
+--            self:closeScene()
+--        end
+--    end, cc.Handler.EVENT_KEYBOARD_RELEASED)
+--    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(self.dymAttrs.keyListener, 1)
+
+--    cc.Director:getInstance():getEventDispatcher():removeEventListener(self.dymAttrs.keyListener)
