@@ -11,6 +11,7 @@ DragonBoneCreator.DEFUALT_ARMATURE_NAME = "armatureDisplay"
 DragonBoneCreator.DEFAULT_SPEED = 0.5
 DragonBoneCreator.DEFAULT_ROTATION = 0
 DragonBoneCreator.cacheDBObjs = DragonBoneCreator.cacheDBObjs or {}
+DragonBoneCreator.resHasLoaded = {}
 
 --[[----        self._armatureDisplay:bindDragonEventListener(handler(self,self._animationEventHandler))
 ----        self._armatureDisplay:addDragonEventType("start")
@@ -41,8 +42,12 @@ function DragonBoneCreator:ctor(dbData)
 
     local dbConfig = {}
     dbConfig._dbFactory = db.CCFactory:getInstance()
-    dbConfig._dragonBonesData = dbConfig._dbFactory:loadDragonBonesData(dbData.skeDataPath)
-    dbConfig._dbFactory:loadTextureAtlasData(dbData.texDataPath)
+    if nil == DragonBoneCreator.resHasLoaded[dbData.skeDataPath] and nil == DragonBoneCreator.resHasLoaded[dbData.texDataPath] then
+        dbConfig._dragonBonesData = dbConfig._dbFactory:loadDragonBonesData(dbData.skeDataPath)
+        dbConfig._dbFactory:loadTextureAtlasData(dbData.texDataPath)
+        DragonBoneCreator.resHasLoaded[dbData.skeDataPath] = true
+        DragonBoneCreator.resHasLoaded[dbData.texDataPath] = true
+    end
     dbConfig._armatureDisplay = dbConfig._dbFactory:buildArmatureDisplay(dbData.armatureName)
     dbConfig._armatureDisplay:setPosition(dbData.armaturePos and dbData.armaturePos or DragonBoneCreator.DEFUALT_POSITION)
     dbConfig._armatureDisplay:setScale(dbData.armatureScale and dbData.armatureScale or DragonBoneCreator.DEFAULT_SCALE)
@@ -86,6 +91,7 @@ function DragonBoneCreator:disposeAllDBs()
     end
     db.CCFactory:getInstance():clear()
     DragonBoneCreator.cacheDBObjs = {}
+	DragonBoneCreator.resHasLoaded = {}
 end
 
 return DragonBoneCreator
