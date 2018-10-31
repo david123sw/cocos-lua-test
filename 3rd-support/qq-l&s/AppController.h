@@ -28,10 +28,12 @@
 #import <AMapLocationKit/AmapLocationKit.h>
 #import <TencentOpenAPI/TencentOauth.h>
 #import <TencentOpenAPI/QQApiInterface.h>
+#import <DTShareKit/DTOpenKit.h>
+#import "XianliaoSDK_iOS/SugramApiManager.h"
 
 @class RootViewController;
 
-@interface AppController : NSObject <UIApplicationDelegate,WXApiDelegate,TencentSessionDelegate,QQApiInterfaceDelegate>
+@interface AppController : NSObject <DTOpenAPIDelegate,UIApplicationDelegate,WXApiDelegate,TencentSessionDelegate,QQApiInterfaceDelegate>
 {
 }
 +(NSString *) getRoomId;
@@ -43,8 +45,21 @@
 +(void) requestQQLogin;
 +(void) qqShareMsg:(NSDictionary *)dict;
 +(void) saveToImageGallery:(NSDictionary *)dict;
++(BOOL) isIphoneX;
++(int) isDingTalkInstalled;
++(int) isDingTalkSupportOpenAPI;
++(void) openDingTalk;
++(void) dingTalkShareMsg:(NSDictionary *)dict;
++(int) isXianLiaoInstalled;
++(void) xianLiaoShareMsg:(NSDictionary *)dict;
++(int) isQQInstalled;
++(int) isDeviceCharging;
++(NSString *) getDeviceInfo;
++(NSString *) getDeviceId;
++(void)deleteDeviceId:(NSString *)idKey;
++(id)loadDeviceId:(NSString *)idKey;
++(NSString*)deviceBrandName;
 @property(nonatomic, readonly) RootViewController* viewController;
 @property(nonatomic, strong) TencentOAuth *tencentOauth;
 //@property(nonatomic, strong) AMapLocationManager *locationManager;//not used
 @end
-

@@ -34,10 +34,13 @@
 #import "yayavoice.h"
 #import "Reachability.h"
 #import "locationtool.h"
+#import <sys/utsname.h>
 
 #import <CoreLocation/CoreLocation.h>
 #import <AMapFoundationKit/AMapFoundationKit.h>
 #include "scripting/lua-bindings/manual/CCLuaEngine.h"
+#import <Foundation/Foundation.h>
+#import <Security/Security.h>
 
 //Add TalkingData support
 #include "TalkingData.h"
@@ -59,6 +62,7 @@ static AppDelegate s_sharedApplication;
 /************************URL Open APP**************************/
 static NSString* roomid = NULL;
 static NSString* replayCode = NULL;
+static NSString* guildID = NULL;
 static bool appIsDidEnterBackground = false;
 
 NSString* parseUrlFromStr(NSString *string)
@@ -73,6 +77,392 @@ NSString* parseUrlFromStr(NSString *string)
         return substringForMatch;
     }
     return NULL;
+}
+
++(int)isDeviceCharging
+{
+    @try {
+        UIDevice *device = [UIDevice currentDevice];
+        device.batteryMonitoringEnabled = YES;
+        if([device batteryState] == UIDeviceBatteryStateCharging || [device batteryState] == UIDeviceBatteryStateFull) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+    @catch(NSException *e) {
+        return 0;
+    }
+}
+
++(int)isQQInstalled{
+    BOOL r = [QQApiInterface isQQInstalled];
+    if (r) {
+        NSLog(@"QQ installed yes");
+        return 1;
+    }
+    else {
+        NSLog(@"QQ installed no");
+        return 0;
+    }
+}
+
++(int) isXianLiaoInstalled{
+    BOOL r = [SugramApiManager isInstallSugram];
+    if (r) {
+        NSLog(@"XiaoLiao installed yes");
+        return 1;
+    }
+    else {
+        NSLog(@"XiaoLiao installed no");
+        return 0;
+    }
+}
+
++(void) xianLiaoShareMsg:(NSDictionary *)dict
+{
+    NSString *shareType = [dict objectForKey:@"shareType"];
+    NSString *shareText = [dict objectForKey:@"shareText"];
+    NSString *shareTitle = [dict objectForKey:@"shareTitle"];
+    NSString *shareDesc = [dict objectForKey:@"shareDesc"];
+    NSString *shareUrl = [dict objectForKey:@"shareUrl"];
+    NSString *sharePreUrl = [dict objectForKey:@"sharePreUrl"];
+    
+    NSLog(@"shareType-->%@", shareType);
+    NSLog(@"shareText-->%@", shareText);
+    NSLog(@"shareTitle-->%@", shareTitle);
+    NSLog(@"shareDesc-->%@", shareDesc);
+    NSLog(@"shareUrl-->%@", shareUrl);
+    NSLog(@"sharePreUrl-->%@", sharePreUrl);
+    
+    if([shareType isEqualToString:@"shareText"])
+    {
+        SugramShareTextObject *textObject = [[SugramShareTextObject alloc] init];
+        //textObject.title = @"title";
+        textObject.text = shareText;
+        [SugramApiManager share:textObject fininshBlock:^(SugramShareCallBackType callBackType) {
+            NSLog(@"callBackType:%ld", (long)callBackType);
+        }];
+    }
+    else if([shareType isEqualToString:@"shareLocalImg"]){
+        SugramShareImageObject *imageObject = [[SugramShareImageObject alloc] init];
+        imageObject.imageData = [NSData dataWithContentsOfFile:sharePreUrl];
+        [SugramApiManager share:imageObject fininshBlock:^(SugramShareCallBackType callBackType) {
+            NSLog(@"callBackType:%ld", (long)callBackType);
+        }];
+    }
+    else if([shareType isEqualToString:@"shareUrl"]){
+        SugramShareGameObject *game = [[SugramShareGameObject alloc] init];
+        game.roomToken = @"null";
+        game.roomId = shareUrl;
+        game.title = shareTitle;
+        game.text = shareDesc;
+        game.imageUrl = sharePreUrl;
+        game.androidDownloadUrl = @"https://fir.im/ywglzp1";
+        game.iOSDownloadUrl = @"https://fir.im/ywglzp2";
+        //game.imageData = [self imageData];
+        [SugramApiManager share:game fininshBlock:^(SugramShareCallBackType callBackType) {
+            NSLog(@"callBackType:%ld", (long)callBackType);
+        }];
+    }
+    else {
+        //默认WebImage
+        SugramShareImageObject *imageObject = [[SugramShareImageObject alloc] init];
+        imageObject.imageUrl = sharePreUrl;
+        [SugramApiManager share:imageObject fininshBlock:^(SugramShareCallBackType callBackType) {
+            NSLog(@"callBackType:%ld", (long)callBackType);
+        }];
+    }
+}
+
++(int) isDingTalkInstalled{
+    BOOL r = [DTOpenAPI isDingTalkInstalled];
+    if (r) {
+        NSLog(@"DingTalk installed yes");
+        return 1;
+    }
+    else {
+        NSLog(@"DingTalk installed no");
+        return 0;
+    }
+}
+
++(int) isDingTalkSupportOpenAPI{
+    BOOL r = [DTOpenAPI isDingTalkSupportOpenAPI];
+    if (r) {
+        NSLog(@"DingTalkOpenAPI installed yes");
+        return 1;
+    }
+    else {
+        NSLog(@"DingTalkOpenAPI installed no");
+        return 0;
+    }
+}
+
++(void) openDingTalk{
+    [DTOpenAPI openDingTalk];
+}
+
++(void) dingTalkShareMsg:(NSDictionary *)dict
+{
+    NSString *shareType = [dict objectForKey:@"shareType"];
+    NSString *shareText = [dict objectForKey:@"shareText"];
+    NSString *shareTitle = [dict objectForKey:@"shareTitle"];
+    NSString *shareDesc = [dict objectForKey:@"shareDesc"];
+    NSString *shareUrl = [dict objectForKey:@"shareUrl"];
+    NSString *sharePreUrl = [dict objectForKey:@"sharePreUrl"];
+    
+    NSLog(@"shareType-->%@", shareType);
+    NSLog(@"shareText-->%@", shareText);
+    NSLog(@"shareTitle-->%@", shareTitle);
+    NSLog(@"shareDesc-->%@", shareDesc);
+    NSLog(@"shareUrl-->%@", shareUrl);
+    NSLog(@"sharePreUrl-->%@", sharePreUrl);
+    
+    if([shareType isEqualToString:@"shareText"])
+    {
+        DTSendMessageToDingTalkReq *sendMessageReq = [[DTSendMessageToDingTalkReq alloc] init];
+        DTMediaMessage *mediaMessage = [[DTMediaMessage alloc] init];
+        DTMediaTextObject *textObject = [[DTMediaTextObject alloc] init];
+        textObject.text = shareText;
+        mediaMessage.mediaObject = textObject;
+        sendMessageReq.message = mediaMessage;
+
+        BOOL result = [DTOpenAPI sendReq:sendMessageReq];
+        if (result)
+        {
+            NSLog(@"DT:Text 发送成功.");
+        }
+        else
+        {
+            NSLog(@"DT:Text 发送失败.");
+        }
+    }
+    else if([shareType isEqualToString:@"shareLocalImg"]){
+        DTSendMessageToDingTalkReq *sendMessageReq = [[DTSendMessageToDingTalkReq alloc] init];
+        DTMediaMessage *mediaMessage = [[DTMediaMessage alloc] init];
+        DTMediaImageObject *imageObject = [[DTMediaImageObject alloc] init];
+        imageObject.imageData = [NSData dataWithContentsOfFile:sharePreUrl];
+        //imageObject.imageURL = sharePreUrl;
+        mediaMessage.mediaObject = imageObject;
+        sendMessageReq.message = mediaMessage;
+        BOOL result = [DTOpenAPI sendReq:sendMessageReq];
+        if (result)
+        {
+            NSLog(@"DT:Image 发送成功.");
+        }
+        else
+        {
+            NSLog(@"DT:Image 发送失败.");
+        }
+    }
+    else if([shareType isEqualToString:@"shareUrl"]){
+        DTSendMessageToDingTalkReq *sendMessageReq = [[DTSendMessageToDingTalkReq alloc] init];
+        DTMediaMessage *mediaMessage = [[DTMediaMessage alloc] init];
+        DTMediaWebObject *webObject = [[DTMediaWebObject alloc] init];
+        webObject.pageURL = shareUrl;
+        mediaMessage.title = shareTitle;
+        mediaMessage.thumbURL = sharePreUrl;
+        // Or Set a image data which less than 32K.
+        // mediaMessage.thumbData = UIImagePNGRepresentation([UIImage imageNamed:@"open_icon"]);
+        mediaMessage.messageDescription = shareDesc;
+        mediaMessage.mediaObject = webObject;
+        sendMessageReq.message = mediaMessage;
+        
+        BOOL result = [DTOpenAPI sendReq:sendMessageReq];
+        if (result)
+        {
+            NSLog(@"DT:URL 发送成功.");
+        }
+        else
+        {
+            NSLog(@"DT:URL 发送失败.");
+        }
+    }
+    else {
+        //默认WebImage
+        DTSendMessageToDingTalkReq *sendMessageReq = [[DTSendMessageToDingTalkReq alloc] init];
+        DTMediaMessage *mediaMessage = [[DTMediaMessage alloc] init];
+        DTMediaImageObject *imageObject = [[DTMediaImageObject alloc] init];
+        imageObject.imageData = [NSData data];
+        imageObject.imageURL = sharePreUrl;
+        mediaMessage.mediaObject = imageObject;
+        sendMessageReq.message = mediaMessage;
+        
+        BOOL result = [DTOpenAPI sendReq:sendMessageReq];
+        if (result)
+        {
+            NSLog(@"DT:Image 发送成功.");
+        }
+        else
+        {
+            NSLog(@"DT:Image 发送失败.");
+        }
+    }
+}
+
++(void)deleteDeviceId:(NSString *)idKey {
+    NSString *saveKeyTag = @"com.sevenjzc.ywglzp";
+    NSMutableDictionary *keychainQuery = [NSMutableDictionary dictionaryWithObjectsAndKeys:(id)kSecClassGenericPassword,
+                                          (id)kSecClass,
+                                          saveKeyTag,
+                                          (id)kSecAttrService,
+                                          saveKeyTag,
+                                          (id)kSecAttrAccount,
+                                          (id)kSecAttrAccessibleAfterFirstUnlock,
+                                          (id)kSecAttrAccessible,
+                                          nil];
+    SecItemDelete((CFDictionaryRef)keychainQuery);
+}
+
++(id)loadDeviceId:(NSString *)idKey {
+    id ret = nil;
+    NSMutableDictionary *keychainQuery = [NSMutableDictionary dictionaryWithObjectsAndKeys:(id)kSecClassGenericPassword,
+                                          (id)kSecClass,
+                                          idKey,
+                                          (id)kSecAttrService,
+                                          idKey,
+                                          (id)kSecAttrAccount,
+                                          (id)kSecAttrAccessibleAfterFirstUnlock,
+                                          (id)kSecAttrAccessible,
+                                          nil];
+    [keychainQuery setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
+    [keychainQuery setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
+    CFDataRef keyData = NULL;
+    if(SecItemCopyMatching((CFDictionaryRef)keychainQuery, (CFTypeRef *)&keyData) == noErr) {
+        @try {
+            ret = [NSKeyedUnarchiver unarchiveObjectWithData:(__bridge NSData *)keyData];
+        }@catch(NSException *e) {
+            NSLog(@"Unarchive of %@ failed: %@", idKey, e);
+        }@finally {
+            NSLog(@"Unarchive of finally");
+        }
+    }
+    if(keyData)
+        CFRelease(keyData);
+    return ret;
+}
+
++(NSString *) getDeviceId {
+    NSString *saveKeyTag = @"com.sevenjzc.ywglzp";
+    NSString *deviceId = (NSString *)[AppController loadDeviceId:saveKeyTag];
+    //NSLog(@"从Keychain里获得的CFUUID %@", deviceId);
+    if(!deviceId || [deviceId isEqualToString:@""] || [deviceId isKindOfClass:[NSNull class]]) {
+        NSString *idfv = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+        NSMutableDictionary *keychainQuery2 = [NSMutableDictionary dictionaryWithObjectsAndKeys:(id)kSecClassGenericPassword,
+                                              (id)kSecClass,
+                                              saveKeyTag,
+                                              (id)kSecAttrService,
+                                              saveKeyTag,
+                                              (id)kSecAttrAccount,
+                                              (id)kSecAttrAccessibleAfterFirstUnlock,
+                                              (id)kSecAttrAccessible,
+                                              nil];
+        SecItemDelete((CFDictionaryRef)keychainQuery2);
+        [keychainQuery2 setObject:[NSKeyedArchiver archivedDataWithRootObject:idfv] forKey:(id)kSecValueData];
+        SecItemAdd((CFDictionaryRef)keychainQuery2, NULL);
+        deviceId = (NSString *)[AppController loadDeviceId:saveKeyTag];
+    }
+    NSLog(@"最终Keychain CFUUID %@", deviceId);
+    return deviceId;
+}
+
++ (NSString*)deviceBrandName
+{
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *deviceModel = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+    
+    if ([deviceModel isEqualToString:@"iPhone3,1"])    return @"iPhone 4";
+    if ([deviceModel isEqualToString:@"iPhone3,2"])    return @"iPhone 4";
+    if ([deviceModel isEqualToString:@"iPhone3,3"])    return @"iPhone 4";
+    if ([deviceModel isEqualToString:@"iPhone4,1"])    return @"iPhone 4S";
+    if ([deviceModel isEqualToString:@"iPhone5,1"])    return @"iPhone 5";
+    if ([deviceModel isEqualToString:@"iPhone5,2"])    return @"iPhone 5 (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPhone5,3"])    return @"iPhone 5c (GSM)";
+    if ([deviceModel isEqualToString:@"iPhone5,4"])    return @"iPhone 5c (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPhone6,1"])    return @"iPhone 5s (GSM)";
+    if ([deviceModel isEqualToString:@"iPhone6,2"])    return @"iPhone 5s (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPhone7,1"])    return @"iPhone 6 Plus";
+    if ([deviceModel isEqualToString:@"iPhone7,2"])    return @"iPhone 6";
+    if ([deviceModel isEqualToString:@"iPhone8,1"])    return @"iPhone 6s";
+    if ([deviceModel isEqualToString:@"iPhone8,2"])    return @"iPhone 6s Plus";
+    if ([deviceModel isEqualToString:@"iPhone8,4"])    return @"iPhone SE";
+    // 日行两款手机型号均为日本独占，可能使用索尼FeliCa支付方案而不是苹果支付
+    if ([deviceModel isEqualToString:@"iPhone9,1"])    return @"国行、日版、港行iPhone 7";
+    if ([deviceModel isEqualToString:@"iPhone9,2"])    return @"港行、国行iPhone 7 Plus";
+    if ([deviceModel isEqualToString:@"iPhone9,3"])    return @"美版、台版iPhone 7";
+    if ([deviceModel isEqualToString:@"iPhone9,4"])    return @"美版、台版iPhone 7 Plus";
+    if ([deviceModel isEqualToString:@"iPhone10,1"])   return @"iPhone_8";
+    if ([deviceModel isEqualToString:@"iPhone10,4"])   return @"iPhone_8";
+    if ([deviceModel isEqualToString:@"iPhone10,2"])   return @"iPhone_8_Plus";
+    if ([deviceModel isEqualToString:@"iPhone10,5"])   return @"iPhone_8_Plus";
+    if ([deviceModel isEqualToString:@"iPhone10,3"])   return @"iPhone_X";
+    if ([deviceModel isEqualToString:@"iPhone10,6"])   return @"iPhone_X";
+    if ([deviceModel isEqualToString:@"iPod1,1"])      return @"iPod Touch 1G";
+    if ([deviceModel isEqualToString:@"iPod2,1"])      return @"iPod Touch 2G";
+    if ([deviceModel isEqualToString:@"iPod3,1"])      return @"iPod Touch 3G";
+    if ([deviceModel isEqualToString:@"iPod4,1"])      return @"iPod Touch 4G";
+    if ([deviceModel isEqualToString:@"iPod5,1"])      return @"iPod Touch (5 Gen)";
+    if ([deviceModel isEqualToString:@"iPad1,1"])      return @"iPad";
+    if ([deviceModel isEqualToString:@"iPad1,2"])      return @"iPad 3G";
+    if ([deviceModel isEqualToString:@"iPad2,1"])      return @"iPad 2 (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad2,2"])      return @"iPad 2";
+    if ([deviceModel isEqualToString:@"iPad2,3"])      return @"iPad 2 (CDMA)";
+    if ([deviceModel isEqualToString:@"iPad2,4"])      return @"iPad 2";
+    if ([deviceModel isEqualToString:@"iPad2,5"])      return @"iPad Mini (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad2,6"])      return @"iPad Mini";
+    if ([deviceModel isEqualToString:@"iPad2,7"])      return @"iPad Mini (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPad3,1"])      return @"iPad 3 (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad3,2"])      return @"iPad 3 (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPad3,3"])      return @"iPad 3";
+    if ([deviceModel isEqualToString:@"iPad3,4"])      return @"iPad 4 (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad3,5"])      return @"iPad 4";
+    if ([deviceModel isEqualToString:@"iPad3,6"])      return @"iPad 4 (GSM+CDMA)";
+    if ([deviceModel isEqualToString:@"iPad4,1"])      return @"iPad Air (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad4,2"])      return @"iPad Air (Cellular)";
+    if ([deviceModel isEqualToString:@"iPad4,4"])      return @"iPad Mini 2 (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad4,5"])      return @"iPad Mini 2 (Cellular)";
+    if ([deviceModel isEqualToString:@"iPad4,6"])      return @"iPad Mini 2";
+    if ([deviceModel isEqualToString:@"iPad4,7"])      return @"iPad Mini 3";
+    if ([deviceModel isEqualToString:@"iPad4,8"])      return @"iPad Mini 3";
+    if ([deviceModel isEqualToString:@"iPad4,9"])      return @"iPad Mini 3";
+    if ([deviceModel isEqualToString:@"iPad5,1"])      return @"iPad Mini 4 (WiFi)";
+    if ([deviceModel isEqualToString:@"iPad5,2"])      return @"iPad Mini 4 (LTE)";
+    if ([deviceModel isEqualToString:@"iPad5,3"])      return @"iPad Air 2";
+    if ([deviceModel isEqualToString:@"iPad5,4"])      return @"iPad Air 2";
+    if ([deviceModel isEqualToString:@"iPad6,3"])      return @"iPad Pro 9.7";
+    if ([deviceModel isEqualToString:@"iPad6,4"])      return @"iPad Pro 9.7";
+    if ([deviceModel isEqualToString:@"iPad6,7"])      return @"iPad Pro 12.9";
+    if ([deviceModel isEqualToString:@"iPad6,8"])      return @"iPad Pro 12.9";
+    
+    if ([deviceModel isEqualToString:@"AppleTV2,1"])      return @"Apple TV 2";
+    if ([deviceModel isEqualToString:@"AppleTV3,1"])      return @"Apple TV 3";
+    if ([deviceModel isEqualToString:@"AppleTV3,2"])      return @"Apple TV 3";
+    if ([deviceModel isEqualToString:@"AppleTV5,3"])      return @"Apple TV 4";
+    
+    if ([deviceModel isEqualToString:@"i386"])         return @"Simulator";
+    if ([deviceModel isEqualToString:@"x86_64"])       return @"Simulator";
+    
+    return deviceModel;
+}
+
++(NSString *) getDeviceInfo{
+    NSString *deviceName = [[UIDevice currentDevice] name];
+    NSString *sysName = [[UIDevice currentDevice] systemName];
+    NSString *sysVersion = [[UIDevice currentDevice] systemVersion];
+    NSString *deviceUUID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+    NSString *deviceModel = [[UIDevice currentDevice] model];
+    NSString *brandName = [AppController deviceBrandName];
+    NSLog(@"deviceName %@", deviceName);
+    NSLog(@"sysName %@", sysName);
+    NSLog(@"sysVersion %@", sysVersion);
+    NSLog(@"deviceUUID %@", deviceUUID);
+    NSLog(@"deviceModel %@", deviceModel);
+    NSLog(@"brandName %@", brandName);
+    NSString *info = [NSString stringWithFormat:@"{\"product\":\"%@\", \"brand\":\"%@\", \"manufacturer\":\"%@\", \"hardware\":\"%@\", \"model\":\"%@\", \"release\":\"%@\"}", deviceName, brandName, @"Apple", @"Apple", deviceModel, sysVersion];
+    return info;
 }
 
 +(NSString *) getAppVersion{
@@ -93,7 +483,7 @@ NSString* parseUrlFromStr(NSString *string)
     {
         NSLog(@"app has enter foreground:%@", pasteboard.string);
         [AppController setRoomId:parseUrlFromStr(pasteboard.string)];
-        pasteboard.string = @"";//mod
+        pasteboard.string = @"";
     }
     
     if(roomid != NULL){
@@ -110,6 +500,12 @@ NSString* parseUrlFromStr(NSString *string)
         return rte;
     }
     
+    if(guildID != NULL){
+        NSString * rte = [NSString stringWithFormat:@"guildID=%@", guildID];
+        [guildID release];
+        guildID = NULL;
+        return rte;
+    }
     return NULL;
 }
 
@@ -134,7 +530,6 @@ NSString* parseUrlFromStr(NSString *string)
         if(error)
         {
             NSLog(@"locationError:{%ld - %@};", (long)error.code, error.localizedDescription);
-            
             if(error.code == AMapLocationErrorReGeocodeFailed)
             {
                 return;
@@ -174,10 +569,21 @@ NSString* parseUrlFromStr(NSString *string)
     NSString *title = [dict objectForKey:@"title"];
     NSString *description = [dict objectForKey:@"description"];
     NSString *previewImgUrl = [dict objectForKey:@"previewImgUrl"];
+    
+    NSLog(@"text--%@", text);
+    NSLog(@"image--%@", image);
+    NSLog(@"absoluteImage--%@", absoluteImage);
+    NSLog(@"utf8String--%@", utf8String);
+    NSLog(@"title--%@", title);
+    NSLog(@"description--%@", description);
+    NSLog(@"previewImgUrl--%@", previewImgUrl);
+    
+    QQApiSendResultCode errCode;
     if(NULL != text) {
         QQApiTextObject *txtObj = [QQApiTextObject objectWithText:text];
         SendMessageToQQReq *req = [SendMessageToQQReq reqWithContent:txtObj];
         QQApiSendResultCode sent = [QQApiInterface sendReq:req];
+        errCode = sent;
     }else if(NULL != image) {
         NSString *imgPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:image];
         if(NULL != absoluteImage) {
@@ -190,6 +596,7 @@ NSString* parseUrlFromStr(NSString *string)
         description:description];
         SendMessageToQQReq *req = [SendMessageToQQReq reqWithContent:imgObj];
         QQApiSendResultCode sent = [QQApiInterface sendReq:req];
+        errCode = sent;
     }else {
         //previewImageURL:[NSURL URLWithString:previewImgUrl]];
         NSString *previewImgPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"Icon-120.png"];
@@ -200,24 +607,38 @@ NSString* parseUrlFromStr(NSString *string)
         previewImageData:previewImgData];
         SendMessageToQQReq *req = [SendMessageToQQReq reqWithContent:newsObj];
         QQApiSendResultCode sent = [QQApiInterface sendReq:req];
-        NSLog(@"QQApiSendResultCode %d", sent);
-        if(0 != sent) {
-            NSString *strErrCode = [NSString stringWithFormat:@"%d", sent];
-            NSLog(@"send message errcode: %@", strErrCode);
-            NSMutableDictionary *data2;
-            data2 = [[NSMutableDictionary alloc] init];
-            [data2 setValue:@"qq_share" forKey:@"type"];
-            [data2 setValue:[NSString stringWithFormat:@"%d", sent] forKey:@"status"];
-            [data2 setValue:@"not-ok" forKey:@"code"];
-            [jstools sendToLuaByWxCode:[data2 JSONString]];
-            NSLog(@"%@",@"ok");
-            [data2 release];
-        }
+        errCode = sent;
+        NSLog(@"QQApiSendResultCode %d", errCode);
+    }
+    if(0 != errCode) {
+        NSString *strErrCode = [NSString stringWithFormat:@"%d", errCode];
+        NSLog(@"send message errcode: %@", strErrCode);
+        NSMutableDictionary *data2;
+        data2 = [[NSMutableDictionary alloc] init];
+        [data2 setValue:@"qq_share" forKey:@"type"];
+        [data2 setValue:[NSString stringWithFormat:@"%d", errCode] forKey:@"status"];
+        [data2 setValue:@"not-ok" forKey:@"code"];
+        [jstools sendToLuaByWxCode:[data2 JSONString]];
+        NSLog(@"%@",@"ok");
+        [data2 release];
     }
 }
 
 +(void) requestQQLogin {
     cocos2d::Director::getInstance()->getEventDispatcher()->dispatchCustomEvent("qq_login");
+}
+
++(BOOL) isIphoneX {
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *pf = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+    NSLog(@"**pf**:%@", pf);
+    if([pf containsString:@"iPhone10"]) {
+        return YES;
+    }
+    else {
+        return NO;
+    }
 }
 
 +(void) saveToImageGallery:(NSDictionary *)dict {
@@ -290,6 +711,22 @@ NSString* parseUrlFromStr(NSString *string)
             [replayCode retain];
         }
     }
+
+    NSString *guildIDStr = [params objectForKey:@"guildID"];
+    if(guildIDStr) {
+        NSLog(@"checkAppLink:guildID:%@", guildIDStr);
+        if(appIsDidEnterBackground){
+            NSMutableDictionary *data  = [[NSMutableDictionary alloc] init];
+            [data setValue:@"urlOpen" forKey:@"type"];
+            NSString * roomdata = [NSString stringWithFormat:@"a%@", guildIDStr];
+            [data setValue:roomdata forKey:@"code"];
+            [jstools sendToLuaByWxCode:[data JSONString]];
+            [data release];
+        }else{
+            guildID = guildIDStr;
+            [guildID retain];
+        }
+    }
     return YES;
 }
 
@@ -319,6 +756,8 @@ NSString* parseUrlFromStr(NSString *string)
     _viewController = [[RootViewController alloc]init];
     _viewController.wantsFullScreenLayout = YES;
     //_viewController.navigationController.interactivePopGestureRecognizer.enabled = NO;
+     
+     [self checkColdUpdate];
 
     // Set RootViewController to window
     if ( [[UIDevice currentDevice].systemVersion floatValue] < 6.0)
@@ -355,7 +794,15 @@ NSString* parseUrlFromStr(NSString *string)
     //GDMap
     [[AMapServices sharedServices] setEnableHTTPS:YES];
     [AMapServices sharedServices].apiKey = (NSString *)GD_API_KEY;
-    /*[self configLocationManager];*/
+     
+    //DingDing
+    [DTOpenAPI registerApp:@"dingoakifreff8eg3t6tcn"];
+     
+    //XianLiao
+    [SugramApiManager registerApp:@"x88ZXOaO1Q9A1J3F"];
+     
+    //QQ
+    _tencentOauth = [[TencentOAuth alloc] initWithAppId:QQ_API_KEY andDelegate:self];
      
     auto listener = cocos2d::EventListenerCustom::create("qq_login", [self](cocos2d::EventCustom* /*event*/){
         //QQ
@@ -379,13 +826,69 @@ NSString* parseUrlFromStr(NSString *string)
             //调用SDK登录
             [_tencentOauth authorize:_permissions inSafari:NO];
         }
-        [_tencentOauth accessToken] ;
-        [_tencentOauth openId] ;
+        [_tencentOauth accessToken];
+        [_tencentOauth openId];
         [_tencentOauth expirationDate];
     });
     cocos2d::Director::getInstance()->getEventDispatcher()->addEventListenerWithFixedPriority(listener, -1);
      
+    [UIDevice currentDevice].batteryMonitoringEnabled = true;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryChargingStateChange:) name:@"UIDeviceBatteryStateDidChangeNotification" object:[UIDevice currentDevice]];
+    
     return YES;
+}
+
+-(void)checkColdUpdate
+{
+    std::string pth = cocos2d::FileUtils::getInstance()->getWritablePath();
+    NSString *nPth = [NSString stringWithCString:pth.c_str() encoding:NSASCIIStringEncoding];
+    NSLog(@"pth--->%@", nPth);
+    NSFileManager *fileMgr=[NSFileManager defaultManager];
+    
+    NSString *verPth = [NSString stringWithCString:(pth+"version.manifest").c_str() encoding:NSASCIIStringEncoding];
+    NSString *proPth = [NSString stringWithCString:(pth+"project.manifest").c_str() encoding:NSASCIIStringEncoding];
+    if ([fileMgr fileExistsAtPath:verPth]) {
+        NSLog(@"File exists！");
+        NSString *resVerOld = verPth;
+        NSString *contentOld = [NSString stringWithContentsOfFile:resVerOld encoding:NSUTF8StringEncoding error:nil];
+        //NSLog(@"%@",contentOld);
+        id contentJsonOld = [NSJSONSerialization JSONObjectWithData:[contentOld dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingAllowFragments error:nil];
+        NSString *verNumOld = contentJsonOld[@"version"];
+        int numOld = [[verNumOld stringByReplacingOccurrencesOfString:@"." withString:@""] intValue];
+        NSLog(@"verion:%d", numOld);
+        
+        NSString *resVerNew = [[NSBundle mainBundle] pathForResource:@"res/version" ofType:@"manifest"];
+        NSString *resProNew = [[NSBundle mainBundle] pathForResource:@"res/project" ofType:@"manifest"];
+        NSString *contentNew = [NSString stringWithContentsOfFile:resVerNew encoding:NSUTF8StringEncoding error:nil];
+        //NSLog(@"%@",contentNew);
+        id contentJsonNew = [NSJSONSerialization JSONObjectWithData:[contentNew dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingAllowFragments error:nil];
+        NSString *verNumNew = contentJsonNew[@"version"];
+        int numNew = [[verNumNew stringByReplacingOccurrencesOfString:@"." withString:@""] intValue];
+        NSLog(@"verion:%d", numNew);
+        
+        if(numNew > numOld) {
+            NSString *res = [NSString stringWithCString:(pth+"res").c_str() encoding:NSASCIIStringEncoding];
+            NSString *src = [NSString stringWithCString:(pth+"src").c_str() encoding:NSASCIIStringEncoding];
+            [fileMgr removeItemAtPath:res error:nil];
+            [fileMgr removeItemAtPath:src error:nil];
+            [fileMgr removeItemAtPath:verPth error:nil];
+            [fileMgr removeItemAtPath:proPth error:nil];
+            
+            if(![fileMgr copyItemAtPath:resVerNew toPath:verPth error:nil]){
+                NSLog(@"Copy failed!");
+            }
+            
+            if(![fileMgr copyItemAtPath:resProNew toPath:proPth error:nil]){
+                NSLog(@"Copy failed!");
+            }
+        }
+    }
+}
+
+-(void)handleBatteryChargingStateChange:(id *)sender
+{
+    NSArray *stateArray = [NSArray arrayWithObjects:@"未开启监视电池状态",@"电池未充电状态",@"电池充电状态",@"电池充电完成",nil];
+    NSLog(@"电池状态：%@", [stateArray objectAtIndex:[[UIDevice currentDevice] batteryState]]);
 }
 
 -(BOOL)tencentNeedPerformReAuth:(TencentOAuth *)tencentOAuth {
@@ -617,19 +1120,34 @@ NSString* parseUrlFromStr(NSString *string)
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
 {
+    NSLog(@"111----->%@", [url absoluteString]);
     return [WXApi handleOpenURL:url delegate:self];
+    
+    //UNDO
 }
 
 -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
-    [WXApi handleOpenURL:url delegate:self];
-
+    NSLog(@"222----->%@", [url absoluteString]);
+    if ([url.absoluteString hasPrefix:@"wx"]) {
+        return [WXApi handleOpenURL:url delegate:self];
+    }
+    
     if ([url.absoluteString hasPrefix:[NSString stringWithFormat:@"tencent%@", QQ_API_KEY]]) {
         [QQApiInterface handleOpenURL:url delegate:self];
         return [TencentOAuth HandleOpenURL:url];
     }
 
+    if ([url.absoluteString hasPrefix:@"ding"]) {
+        return [DTOpenAPI handleOpenURL:url delegate:self];
+    }
+    
+    if ([url.absoluteString hasPrefix:@"xianliao"]) {
+        return [SugramApiManager handleOpenURL:url];
+    }
+    
     [AppController checkAppLink:url];
+    
     return  YES;
 }
 
