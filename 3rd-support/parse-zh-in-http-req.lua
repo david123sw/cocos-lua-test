@@ -87,3 +87,43 @@ function LoginScene:hasServerMaintainceNotice(owner, isIgnore)
     end)
     owner.xhr:send()
 end
+
+-------------------------------------------------------------------------
+--        local curDownloadingSize = 0
+--        local function saveDownloadResponse(delta)
+--            if nil ~= self.receivedData then
+--                curDownloadingSize = curDownloadingSize + string.len(self.receivedData)
+--                local ret = io.writefile(cc.FileUtils:getInstance():getWritablePath().."test", self.receivedData)
+--                self.receivedData = nil
+--                gt.log("curDownloadingSize:"..curDownloadingSize)
+--            end
+--        end
+
+--        if not self.scheduleHandlerForDownloader then
+--		    self.scheduleHandlerForDownloader = gt.scheduler:scheduleScriptFunc(saveDownloadResponse, 0, false)
+--	    end
+
+        self.subGamesDownloader = cc.XMLHttpRequest:new()
+        self.subGamesDownloader.responseType = cc.XMLHTTPREQUEST_RESPONSE_BLOB
+        self.subGamesDownloader.timeout = 30
+        local function downloadResponse()
+            if self.subGamesDownloader.readyState == 4 and (self.subGamesDownloader.status >= 200 and self.subGamesDownloader.status < 207) then
+                self.receivedData = self.subGamesDownloader.response
+                if "string" == type(self.receivedData) then
+                    gt.log("content:"..(self.receivedData))
+                    gt.log("size:"..string.len(self.receivedData))
+                    local ret = io.writefile(cc.FileUtils:getInstance():getWritablePath().."test", self.receivedData)
+                    if ret then
+                        
+                    end
+                end
+            elseif self.subGamesDownloader.readyState == 1 and self.subGamesDownloader.status == 0 then
+                gt.log("resp failed, due to network failed")
+            else
+                gt.log("unknown rs:"..self.subGamesDownloader.readyState)
+            end
+            self.subGamesDownloader:unregisterScriptHandler()
+        end
+        self.subGamesDownloader:open("GET", "http://192.168.36.198:8080/xianliaoIOS.sdk.zip")
+        self.subGamesDownloader:registerScriptHandler(downloadResponse)
+        self.subGamesDownloader:send()
