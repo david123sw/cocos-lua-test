@@ -26,10 +26,13 @@ THE SOFTWARE.
 ****************************************************************************/
 package org.game;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,13 +50,19 @@ import org.extension.ExtensionApi;
 import org.ynlib.utils.Utils;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.hardware.SensorManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -62,6 +71,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
@@ -72,10 +82,12 @@ import android.os.PowerManager;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.widget.Toast;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.appcompat.*;
+//import android.support.v7.appcompat.*;
+import org.game.PowerConnectionReceiver;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -105,11 +117,36 @@ import com.tencent.tauth.Tencent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.sevenjzc.ywglzp.ddshare.DDShareActivity;
 import com.sevenjzc.ywglzp.qqapi.QQBaseUIListener;
 import com.sevenjzc.ywglzp.qqapi.QQUtil;
 import com.sevenjzc.ywglzp.qqapi.QQShareActivity;
+import com.android.dingtalk.share.ddsharemodule.DDShareApiFactory;
+import com.android.dingtalk.share.ddsharemodule.IDDShareApi;
+import com.android.dingtalk.share.ddsharemodule.ShareConstant;
+import com.android.dingtalk.share.ddsharemodule.message.BaseReq;
+import com.android.dingtalk.share.ddsharemodule.message.BaseResp;
+import com.android.dingtalk.share.ddsharemodule.message.DDImageMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDMediaMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDTextMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDWebpageMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDZhiFuBaoMesseage;
+import com.android.dingtalk.share.ddsharemodule.message.SendAuth;
+import com.android.dingtalk.share.ddsharemodule.message.SendMessageToDD;
+import com.android.dingtalk.share.ddsharemodule.plugin.SignatureCheck;
+import com.android.dingtalk.share.ddsharemodule.IDDAPIEventHandler;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
-public class AppActivity extends Cocos2dxActivity implements MessageEventListener {
+import org.xianliao.im.sdk.api.ISGAPI;
+import org.xianliao.im.sdk.api.SGAPIFactory;
+import org.xianliao.im.sdk.constants.SGConstants;
+import org.xianliao.im.sdk.modelmsg.SGGameObject;
+import org.xianliao.im.sdk.modelmsg.SGMediaMessage;
+import org.xianliao.im.sdk.modelmsg.SendMessageToSG;
+
+public class AppActivity extends Cocos2dxActivity implements MessageEventListener{
 	public static GL10 gl10;
 	private int intLevel; 
     private int intScale;   
@@ -134,28 +171,39 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 	public static Tencent mTencent;
     private static Intent mPrizeIntent = null;
     private static boolean isServerSideLogin = false;
+    OrientationEventListener mOrientationListener;
+    private boolean isYvSDKInitSuccess = false;
+    private boolean ignoreCopyAssets = false;
+    
+    private IDDShareApi iddShareApi = null;
+    private DDShareActivity iddContainer = null;
+    private IDDAPIEventHandler iddAPIEventHandler = null;
+    private PowerConnectionReceiver pcr = null;
+    
+    ISGAPI xLApi;
+    String xLRoomToken;
+    String xLRoomId;
 	
-    private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() { 
- 
+    private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
         @Override 
         public void onReceive(Context context, Intent intent) { 
             // TODO Auto-generated method stub 
             String action = intent.getAction(); 
             if (Intent.ACTION_BATTERY_CHANGED.equals(action)) { 
-                intLevel = intent.getIntExtra("level", 0); 
-                intScale = intent.getIntExtra("scale", 100); 
-                onBatteryInfoReceiver(intLevel, intScale); 
-            } 
+                intLevel = intent.getIntExtra("level", 0);
+                intScale = intent.getIntExtra("scale", 100);
+                onBatteryInfoReceiver(intLevel, intScale);
+            }
         }
-
-    }; 
+    };
+    
     @Override
     public Cocos2dxGLSurfaceView onCreateView() {
         Cocos2dxGLSurfaceView glSurfaceView = new Cocos2dxGLSurfaceView(this);
         // TestCpp should create stencil buffer
         glSurfaceView.setEGLConfigChooser(5, 6, 5, 0, 16, 8);
         ExtensionApi.appActivity = this;
-        return glSurfaceView; 
+        return glSurfaceView;
     }     
           
     @Override  
@@ -174,8 +222,93 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		sdkVerNum = Build.VERSION.SDK_INT;
 		is8SDK = sdkVerNum >= 26;
 		
-    }   
+        this.initOrientationChecker();
+        this.initDingTalkShareApi();
+        this.initXianLiaoShareApi();
+        this.initQQShareApi();
+        this.initBatteryChargingChecker();
+        Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
+    }
 
+    public void setRequestedOrientation(final String so) {
+		if(so.equals("landscape")) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		}else if(so.equals("portrait")) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		}else if(so.equals("sensorLandscape")) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+		}else if(so.equals("sensorPortrait")) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+		}
+    }
+    
+    public void initBatteryChargingChecker()
+    {
+    	if(null == pcr){
+    		pcr = new PowerConnectionReceiver();
+    	}
+    }
+    
+    public void initQQShareApi() {
+		if(null == mTencent) {
+			mTencent = Tencent.createInstance(Constant.QQ_APPID, this.getApplicationContext());
+		}
+    }
+    
+    public void initXianLiaoShareApi() {
+    	if(null == xLApi) {
+    		xLApi = SGAPIFactory.createSGAPI(this, Constant.APP_XIAN_LIAO_KEY);
+    	}
+    }
+    
+    public ISGAPI getXianLiaoShareApi() {
+    	return xLApi;
+    }
+    
+    public void initDingTalkShareApi() {
+		if(null == iddShareApi) {
+			iddShareApi = DDShareApiFactory.createDDShareApi(this, Constant.APP_DING_TALK_KEY, true);
+		}
+    }
+    
+    public IDDShareApi getDingTalkShareApi() {		
+    	return iddShareApi;
+    }
+    
+    public void initOrientationChecker() {
+		mOrientationListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL){
+            @Override  
+            public void onOrientationChanged(int orientation) {  
+               if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN){
+            	   Log.d("OrientationEventListener", "Unknown");
+            	   return;
+               }
+//               Log.d("OrientationEventListener", "" + orientation);
+               if (orientation > 350 || orientation < 10) {
+            	   orientation = 0;
+	           } else if (orientation > 80 && orientation < 100) {
+	        	   ExtensionApi.callBackOnGLThread(ExtensionApi.appActivity.bindMsg(ExtensionApi.TYPE_SCREEN_HORIZONTAL_FLIP, 1, "90"));
+	           } else if (orientation > 170 && orientation < 190) {
+	        	   orientation = 180;
+        	   } else if (orientation > 260 && orientation < 280) {
+        		   ExtensionApi.callBackOnGLThread(ExtensionApi.appActivity.bindMsg(ExtensionApi.TYPE_SCREEN_HORIZONTAL_FLIP, 1, "270"));
+    		   } else {
+    			   return;
+			   }
+           }
+		};
+	    if (mOrientationListener.canDetectOrientation()) {  
+           mOrientationListener.enable(); 
+	    } else {
+           mOrientationListener.disable();
+	    }
+    }
+    
+    @Override  
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+    
 	Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -313,34 +446,145 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		return getAssets();
 	}
 	
+    public String jsonReaderVer(File file) {
+    	String jsonStr = null;
+    	String version = "";
+        try {
+            if (file.isFile() && file.exists()) {
+                InputStreamReader read = new InputStreamReader(new FileInputStream(file), "UTF-8");
+                BufferedReader bufferedReader = new BufferedReader(read);
+                String lineTxt = bufferedReader.readLine();
+                String totalLineTxt = "";
+                while (lineTxt != null) {
+                	totalLineTxt += lineTxt;
+                	lineTxt = bufferedReader.readLine();
+                }
+                jsonStr = totalLineTxt;
+                if(null != bufferedReader) {
+                	bufferedReader.close();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        if(null != jsonStr) {
+        	try {
+            	JSONObject jsonObj = new JSONObject(jsonStr);
+            	version = jsonObj.getString("version");
+        	}
+        	catch(JSONException e) {
+        		Log.d("Exception::", "jsonReaderVer");
+        	}
+        }
+        return version;
+    }
+    
+    public String jsonReaderVerEx(final String srcFile) {
+    	String jsonStr = null;
+    	String version = "";
+		try {
+			AssetManager am = getAssets();
+			InputStream is = am.open("res/" + srcFile);
+			InputStreamReader read = new InputStreamReader(is, "UTF-8");
+            BufferedReader bufferedReader = new BufferedReader(read);
+            String lineTxt = bufferedReader.readLine();
+            String totalLineTxt = "";
+            while (lineTxt != null) {
+            	totalLineTxt += lineTxt;
+            	lineTxt = bufferedReader.readLine();
+            }
+            jsonStr = totalLineTxt;
+            if(null != bufferedReader) {
+            	bufferedReader.close();
+            }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+        if(null != jsonStr) {
+        	try {
+            	JSONObject jsonObj = new JSONObject(jsonStr);
+            	version = jsonObj.getString("version");
+        	}
+        	catch(JSONException e) {
+        		Log.d("Exception::", "jsonReaderVerEx");
+        	}
+        }
+        return version;
+    }
+    
+    public static void deleteDirWihtFiles(File dir) {
+        if (dir.isFile()) {
+            dir.delete();
+            return;
+        }
+
+        if (dir.isDirectory()) {
+            File[] subFiles = dir.listFiles();
+            if(subFiles == null || 0 == subFiles.length) {
+                dir.delete();
+                return;
+            }
+
+            for(int i = 0; i < subFiles.length; ++i)
+            {
+                deleteDirWihtFiles(subFiles[i]);
+            }
+            dir.delete();
+        }
+    }
+    
     public void copyAssetsFile(final String srcFile) {
     	final File fs = new File(getFilesDir(), srcFile);
-    	Log.d(Constant.LOG_TAG, "fs manifest write path:" + fs);
+    	boolean copyFlag = false;
     	if(fs.exists())
     	{
     		Log.d(Constant.LOG_TAG, "fs manifest exist");
-    		return;
+    		String version1 = this.jsonReaderVer(fs);
+    		String version2 = this.jsonReaderVerEx(srcFile);
+    		
+        	version1 = version1.replace(".", "");
+        	version2 = version2.replace(".", "");	  	
+        	if(Integer.parseInt(version1) < Integer.parseInt(version2)) {
+        		if(srcFile == "project.manifest") {
+                    Log.d(Constant.LOG_TAG, "full pack update");
+                    File filesDir = new File(getFilesDir(), "");
+                    deleteDirWihtFiles(filesDir);
+                    copyFlag = true;
+                }else {
+                	copyFlag = true;
+                }
+        	}
+        	else
+        	{
+        		return;
+        	}
+    	}else {
+    		copyFlag = true;
     	}
     	
-    	new Thread() {
-    		public void run() {
-    			Log.d(Constant.LOG_TAG, "manifest copy");
-    			try {
-    				AssetManager am = getAssets();
-    				InputStream is = am.open("res/" + srcFile);
-    				FileOutputStream fos = new FileOutputStream(fs);
-    				byte[] buffer = new byte[512];
-    				int len = 0;
-    				while((len=is.read(buffer)) != -1) {
-    					fos.write(buffer, 0, len);
-    				}
-    				fos.close();
-    				is.close();
-    			} catch (Exception e) {
-    				e.printStackTrace();
-    			}
-    		}
-    	}.start();
+    	if(copyFlag) {
+    		new Thread() {
+        		public void run() {
+        			Log.d(Constant.LOG_TAG, "manifest copy");
+        			try {
+        				AssetManager am = getAssets();
+        				InputStream is = am.open("res/" + srcFile);
+        				FileOutputStream fos = new FileOutputStream(fs);
+        				byte[] buffer = new byte[512];
+        				int len = 0;
+        				while((len=is.read(buffer)) != -1) {
+        					fos.write(buffer, 0, len);
+        				}
+        				fos.close();
+        				is.close();
+        			} catch (Exception e) {
+        				e.printStackTrace();
+        			}
+        		}
+        	}.start();	
+    	}
     }
     
     public void startCustomActivity(Intent intent) {
@@ -350,10 +594,11 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     @Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onNewIntent");
 		setIntent(intent);
-		 if(getIntent() != null){
-			   getURLParame();
-		 }
+		if(getIntent() != null){
+			getURLParame();
+		}
 	}
     
     private void getAppVersion(){
@@ -368,21 +613,25 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 
 	private void getURLParame(){
 	    Intent intent = getIntent();
-	    Uri deeplink = intent.getData();
-	    if(deeplink != null){
-	    	String roomid = deeplink.getQueryParameter("roomid");
-	    	String replayCode = deeplink.getQueryParameter("replayCode");
-	    	String guildID = deeplink.getQueryParameter("guildID");
-	    	if(roomid == null) {
-	    		roomid = "";
-	    	}
-	    	if(replayCode == null) {
-	    		replayCode = "";
-	    	}
-	    	if(guildID == null) {
-	    		guildID = "";
-	    	}
-	    	AppActivity.roomid = "roomid="+roomid+"#replayCode="+replayCode+"#guildID="+guildID;
+	    String action = intent.getAction();
+	    boolean isValid = Intent.ACTION_VIEW.equals(action);
+	    if(null != intent) {
+		    Uri deeplink = intent.getData();
+		    if(deeplink != null){
+		    	String roomid = deeplink.getQueryParameter("roomid");
+		    	String replayCode = deeplink.getQueryParameter("replayCode");
+		    	String guildID = deeplink.getQueryParameter("guildID");
+		    	if(roomid == null) {
+		    		roomid = "";
+		    	}
+		    	if(replayCode == null) {
+		    		replayCode = "";
+		    	}
+		    	if(guildID == null) {
+		    		guildID = "";
+		    	}
+		    	AppActivity.roomid = "roomid="+roomid+"#replayCode="+replayCode+"#guildID="+guildID;
+		    }
 	    }
 	}
 
@@ -395,13 +644,17 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 			{
 				String roomid = Uri.parse(linkUrl).getQueryParameter("roomid");
 		    	String replayCode = Uri.parse(linkUrl).getQueryParameter("replayCode");
+		    	String guildID = Uri.parse(linkUrl).getQueryParameter("guildID");
 		    	if(roomid == null) {
 		    		roomid = "";
 		    	}
 		    	if(replayCode == null) {
 		    		replayCode = "";
 		    	}
-		    	AppActivity.roomid = "roomid="+roomid+"#replayCode="+replayCode;
+		    	if(guildID == null) {
+		    		guildID = "";
+		    	}
+		    	AppActivity.roomid = "roomid="+roomid+"#replayCode="+replayCode+"#guildID="+guildID;
 				cbm.setText("");	
 			}
 		}
@@ -444,7 +697,6 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
                 detailStr = java.net.URLDecoder.decode(location.getDistrict() + location.getStreet(),"utf-8");
                 str = str + detailStr + "#";
                 locationInfo = str;
-                locationClient.onDestroy();
                 Log.d("LOC", str);  
             } catch (Exception e)
             {
@@ -460,7 +712,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         mOption.setLocationMode(AMapLocationMode.Hight_Accuracy);
         mOption.setGpsFirst(false);
         mOption.setHttpTimeOut(30000);
-        mOption.setInterval(2000);
+        mOption.setInterval(10000);
         mOption.setNeedAddress(true);
         mOption.setOnceLocation(false);
         mOption.setOnceLocationLatest(false);
@@ -475,6 +727,8 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		// TODO Auto-generated method stub
 		super.onResume();
 		TalkingDataGA.onResume(this);
+		
+		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onResume");
 	}
 
 	@Override
@@ -482,17 +736,31 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		// TODO Auto-generated method stub
 		super.onPause();
 		TalkingDataGA.onPause(this);
+		
+		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onPause");
 	}
 
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		super.onDestroy();  
+		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onDestroy");
 		keepScreenOn(this, false);  
 		
-		MessageEventSource.getSingleton().removeLinstener(this);
-		YunvaImSdk.getInstance().clearCache();
-		YunvaImSdk.getInstance().release();
+		if(true == isYvSDKInitSuccess) {
+			MessageEventSource.getSingleton().removeLinstener(this);
+			YunvaImSdk.getInstance().clearCache();
+			YunvaImSdk.getInstance().release();
+		}
+		
+		if(locationClient != null){
+            locationClient.onDestroy();
+            locationClient = null;
+        }
+		
+		if(mOrientationListener != null) {
+			mOrientationListener.disable();	
+		}
 	} 
 	
 	@Override
@@ -560,6 +828,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     	if (m != true) {
     		Log.w("Voice", "YunvaImSdk init fail");  
     	}
+    	isYvSDKInitSuccess = m;
     	YunvaImSdk.getInstance().setRecordMaxDuration(20, false);
     	MessageEventSource.getSingleton().addLinstener(	MessageType.IM_THIRD_LOGIN_RESP, this);
     	MessageEventSource.getSingleton().addLinstener(	MessageType.IM_LOGIN_RESP, this);
@@ -612,7 +881,13 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     public boolean stopAudioRecording() {
     	if(null != audioMR) {
     		mpEndTm = System.currentTimeMillis();
-    		audioMR.stop();
+    		try {
+    			audioMR.stop();
+    		}
+    		catch(IllegalStateException e) {
+    			audioMR = null;
+    			audioMR = new MediaRecorder();
+    		}
     		audioMR.reset();
     		audioMR.release();
     		audioMR = null;
@@ -635,6 +910,15 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 						audioMP.start();
 					}
 				});
+    			audioMP.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+					
+					@Override
+					public void onCompletion(MediaPlayer mp) {
+						audioMP.release();
+			    		audioMP = null;
+						ExtensionApi.callBackOnGLThread(ExtensionApi.appActivity.bindMsg(ExtensionApi.voice_finish_play, 1, "0"));
+					}
+				});
     		}
     		else {
     			audioMP.setDataSource(audioPrepath);
@@ -649,7 +933,15 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     
     public void stopPlayAudioRecording() {
     	if(null != audioMP) {
-    		audioMP.stop();
+    		
+    		try {
+    			audioMP.stop();
+    		}
+    		catch(IllegalStateException e) {
+    			audioMP = null;
+    			audioMP = new MediaPlayer();
+    		}
+    		
     		audioMP.release();
     		audioMP = null;
     	}
@@ -680,6 +972,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         	boolean retAutio = YunvaImSdk.getInstance().stopPlayAudio();
         	boolean retRecord = YunvaImSdk.getInstance().stopAudioRecord();	
     	}
+    	audioPrepath =Environment.getExternalStorageDirectory().toString() + "/amr_";
     	return true;
     }   
     
@@ -689,12 +982,40 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
       
     public void voicePlay(String url) {
     	if(is8SDK) {
+    		Log.d("d-voicePlay", "is8SDK");
         	this.stopPlayAudioRecording();
         	this.playAudioRecording(url);
     	}else {
+    		Log.d("d-voicePlay", "not is8SDK");
         	YunvaImSdk.getInstance().stopPlayAudio();
-        	YunvaImSdk.getInstance().playAudio(url, "", "");	
+        	YunvaImSdk.getInstance().playAudio(url, "", "");
     	}
+    }
+    
+    public void stopAllVoice() {
+    	if(is8SDK) {
+    		Log.d("d-stopAllVoice", "is8SDK");
+        	this.stopPlayAudioRecording();
+    	}else {
+    		Log.d("d-stopAllVoice", "not is8SDK");
+        	YunvaImSdk.getInstance().stopPlayAudio();
+    	}
+    }
+    
+    public int getVoiceDuration(String url) {
+    	MediaPlayer player = new MediaPlayer(); 
+        try {
+            player.setDataSource(url);
+            player.prepare(); 
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int duration= player.getDuration();
+        Log.d("getVoiceDuration", "### duration: " + duration);
+        player.release();
+        return duration;
     }
     
     public void yayaLogin(String uid, String unick) {
@@ -702,7 +1023,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     	YunvaImSdk.getInstance().Binding(tt, "1", null);
     }
     
-    private String bindMsg(String type, int status, String code) {
+    public String bindMsg(String type, int status, String code) {
     	return "{\"type\":\"" + type + "\", \"status\":" + status +", \"code\":\""+ code + "\"}";
     }
     

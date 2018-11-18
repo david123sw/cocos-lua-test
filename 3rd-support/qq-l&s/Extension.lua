@@ -9,6 +9,9 @@ extension.type_appstore_pay = "appstore_pay" --ios appstore pay
 extension.type_ali_pay = "ali_pay" --支付宝
 extension.qq_login = "qq_login" --QQ登录
 extension.qq_share = "qq_share" --QQ分享
+extension.horizontal_flip = "horizontal_flip" --android屏幕翻转
+extension.ding_talk_share = "ding_talk_share" --钉钉分享
+extension.type_charging_status = "power_charging_status" --手机充电状态
 
 --支付类型
 extension.PAY_TYPE_ALI = "pay_type_ali"
@@ -42,6 +45,8 @@ end
 
 --orderInfo
 extension.orderInfo = ""
+--copypasteInfo
+extension.copyPasteInfo = ""
 
 local APIClass = 'org/extension/ExtensionApi'
 
@@ -69,15 +74,343 @@ cc.exports.extension_callback = function(jsonObj)
 	end
 end
 
-extension.iosUrlOpenHandle = function(obj)
-    local roomid = obj.code.substring(1)
-    gt.log("roomid:"..roomid )
-    if roomid ~= "" then
-
-	end
+--获取设备信息---
+extension.getDeviceInfo = function()
+    local ok
+	local device = ""
+    if gt.isAndroidPlatform() then
+        ok, device = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'getDeviceInfo',
+			nil,
+            '()Ljava/lang/String;'
+        )
+    elseif (gt.isIOSPlatform()) then
+        ok, device = extension.luaBridge.callStaticMethod(
+            'AppController',
+            'getDeviceInfo'
+        )
+    end
+    return device
 end
-    
-extension.callBackHandler["urlOpen"] = extension.iosUrlOpenHandle
+
+--获取设备ID---
+extension.getDeviceId = function()
+    local ok
+	local device = "abc"
+    if gt.isAndroidPlatform() then
+        ok, device = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'getDeviceId',
+			nil,
+            '()Ljava/lang/String;'
+        )
+    elseif (gt.isIOSPlatform()) then
+        ok, device = extension.luaBridge.callStaticMethod(
+            'AppController',
+            'getDeviceId'
+        )
+    end
+    return device
+end
+
+--设置屏幕方向---
+extension.setRequestedOrientation = function(so)
+    if (gt.isIOSPlatform()) then
+        --nothing
+    elseif (gt.isAndroidPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'setRequestedOrientation',
+			{so},
+            '(Ljava/lang/String;)V'
+        )
+    end
+end
+
+--是否正在充电---
+extension.isBatteryCharging = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            "AppController",
+            'isDeviceCharging'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isBatteryCharging',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--是否是华为全面屏手机---
+extension.isHuaWeiFullAspect = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+        return false
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isHuaWeiFullAspect',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--是否安装腾讯应用宝---
+extension.isQQDownloaderInstalled = function(name)
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+        return false
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isQQDownloaderInstalled',
+			{name},
+            '(Ljava/lang/String;)Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--腾讯应用宝安装APP---
+extension.jumpToQQDownloaderAndInstallApp = function(name)
+    local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+        --忽略
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'jumpToQQDownloaderAndInstallApp',
+			{name},
+            '(Ljava/lang/String;)V'
+        )
+        if true == ok then
+           gt.openWX = true
+        end
+    end
+end
+
+--是否安装QQ---
+extension.isQQInstalled = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+       ok, ret = extension.luaBridge.callStaticMethod(
+            "AppController",
+            'isQQInstalled'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ret = extension.isQQDownloaderInstalled("com.tencent.mobileqq")
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--是否安装闲聊---
+extension.isXianLiaoInstalled = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+       ok, ret = extension.luaBridge.callStaticMethod(
+            "AppController",
+            'isXianLiaoInstalled'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isXianLiaoInstalled',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--闲聊分享
+--text--->{shareType=shareType, shareText=shareText}
+--url---->{shareType=shareType, shareText=shareText, shareTitle=shareTitle, shareDesc=shareDesc, shareUrl=shareUrl, sharePreUrl=sharePreUrl}
+extension.shareXianLiao = function(msgDic)
+    if (gt.isIOSPlatform()) then
+       extension.luaBridge.callStaticMethod(
+            "AppController",
+            'xianLiaoShareMsg',
+            msgDic
+        )
+    elseif (gt.isAndroidPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'shareXianLiao',
+			{msgDic.shareType, msgDic.shareText, msgDic.shareTitle, msgDic.shareDesc, msgDic.shareUrl, msgDic.sharePreUrl},
+            '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
+        )
+    end
+end
+
+--是否安装钉钉
+extension.isDingTalkInstalled = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+       ok, ret = extension.luaBridge.callStaticMethod(
+            "AppController",
+            'isDingTalkInstalled'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isDingTalkInstalled',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--是否安装钉钉支持分享1
+extension.isDingTalkSupportAPI = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+    ok, ret = extension.luaBridge.callStaticMethod(
+        "AppController",
+        'isDingTalkSupportOpenAPI'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isDingTalkSupportAPI',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--是否安装钉钉支持分享2
+extension.isDingTalkSupportDingAPI = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+        --默认不支持
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'isDingTalkSupportDingAPI',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--打开钉钉
+extension.openDingTalk = function()
+	local ok
+	local ret = false
+    if (gt.isIOSPlatform()) then
+       ok, ret = extension.luaBridge.callStaticMethod(
+            "AppController",
+            'openDingTalk'
+        )
+    elseif (gt.isAndroidPlatform()) then
+        ok, ret = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'openDingTalk',
+			nil,
+            '()Z'
+        )
+    end
+	if ret == true or ret == 1 then
+		return true
+	end
+    return false
+end
+
+--钉钉分享
+--text--->{shareType=shareType, shareText=shareText}
+--url---->{shareType=shareType, shareText=shareText, shareTitle=shareTitle, shareDesc=shareDesc, shareUrl=shareUrl, sharePreUrl=sharePreUrl}
+extension.shareDingTalk = function(msgDic)
+    if (gt.isIOSPlatform()) then
+       extension.luaBridge.callStaticMethod(
+            'AppController',
+            'dingTalkShareMsg',
+            msgDic
+        )
+    elseif (gt.isAndroidPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'shareDingTalk',
+			{msgDic.shareType, msgDic.shareText, msgDic.shareTitle, msgDic.shareDesc, msgDic.shareUrl, msgDic.sharePreUrl},
+            '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
+        )
+    end
+end
+
+extension.getVirtualBarHeightWrap = function()
+    local ok
+    local wrap
+    if gt.isAndroidPlatform() then
+        ok, wrap = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'getVirtualBarHeightWrap',
+			nil,
+            '()Ljava/lang/String;'
+        )
+    end
+    return wrap
+end
+
+extension.getAndroidVirtualBarHeight = function(call_back)
+    extension.callBackHandler[extension.horizontal_flip] = call_back
+    local ok
+	local barHeight = 0
+    ok, barHeight = extension.luaBridge.callStaticMethod(
+        APIClass,
+        'getNavigationBarHeight',
+		nil,
+        '()I'
+    )
+    return barHeight
+end
+
+extension.addPhoneChargingStatusChecker = function (call_back)
+    extension.callBackHandler[extension.type_charging_status] = call_back
+    return extension.isBatteryCharging()
+end
 
 --获得app版本号
 extension.getAppVersion = function()
@@ -242,6 +575,12 @@ extension._getLocationHandler = function(data)
     if gt.location and string.len(gt.location) > 0 then
         gt.location = string.gsub(gt.location,"[(*null)*]","")
     end
+
+    local curScene = cc.Director:getInstance():getRunningScene()
+    gt.log("extension._getLocationHandler,curScene:getName() = "..curScene:getName())
+    if curScene:getName() == "zipaiScene" then
+        curScene:onUpdateGpCallback()
+    end
 end
 
 
@@ -270,23 +609,29 @@ end
 
 
 --分享图片???
-extension.shareToImage = function(shareTo, filePath)
+extension.shareToImage = function(shareTo, filePath, call_back)
     if(not extension.isInstallWeiXin())then
         gt.log("非微信登录无法分享")
         return 
     end
+    local ok, text
     if ( gt.isIOSPlatform() ) then
+        extension.callBackHandler[extension.type_wxmessage] = call_back --注册回调函数
         extension.luaBridge.callStaticMethod("wxlogin",
             "sendImageContent",
             {shareTo = shareTo, filePath = filePath}
 			)
     elseif (gt.isAndroidPlatform()) then
-        extension.luaBridge.callStaticMethod(
+        extension.callBackHandler[extension.type_wxshare] = call_back --注册回调函数
+        ok, text = extension.luaBridge.callStaticMethod(
             APIClass,
             "weixinShareImg",
 			{shareTo, filePath},
             '(Ljava/lang/String;Ljava/lang/String;)V'
             )
+        if true == ok then
+           gt.openWX = true
+        end
     end
 end
 
@@ -297,22 +642,25 @@ extension.shareToURL = function(shareTo, title, message, url, call_back)
         return 
     end
 
-    gt.log(message)
+    local ok, text
     if ( gt.isIOSPlatform() ) then
 		extension.callBackHandler[extension.type_wxmessage] = call_back --注册回调函数
         extension.luaBridge.callStaticMethod(
             "wxlogin",
             "sendLinkContent",
             {shareTo = shareTo, title = title, text = message, url = url}
-			)
+		)
     elseif (gt.isAndroidPlatform()) then
 		extension.callBackHandler[extension.type_wxshare] = call_back --注册回调函数
-        extension.luaBridge.callStaticMethod(
+        ok, text = extension.luaBridge.callStaticMethod(
             APIClass,
             "weixinShareApp",
 			{shareTo, title, message, url},
             '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
-            )
+        )
+        if true == ok then
+           gt.openWX = true
+        end
     end
 end
 
@@ -495,6 +843,40 @@ extension.voicePlay = function(call_back, url)
     end
 end
 
+--停止语音播放
+extension.stopVoicePlay = function()
+    if(gt.isAndroidPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'stopAllVoice',
+			nil,
+            '()V'
+        )
+    elseif (gt.isIOSPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            'yayavoice',
+            'voicePlayStop'
+        )
+    end
+end
+
+--获取录音长度
+extension.getVoiceDuration = function(url)
+    local ok
+	local duration = 0
+    if(gt.isAndroidPlatform()) then
+        ok, duration = extension.luaBridge.callStaticMethod(
+            APIClass,
+            'getVoiceDuration',
+			{url},
+            '(Ljava/lang/String;)I'
+        )
+    elseif (gt.isIOSPlatform()) then
+        
+    end
+    return duration
+end
+
 --录音退出
 extension.yayaLoginOut = function()
     if(gt.isAndroidPlatform()) then
@@ -636,6 +1018,7 @@ extension.IOSPay = function(orderInfo)
 end
 
 extension.CopyTextToClipboard=function ( str )
+    extension.copyPasteInfo = str
     if(gt.isAndroidPlatform()) then
         gt.log("extension.CopyTextToClipboard android:"..str)
         extension.luaBridge.callStaticMethod(
@@ -656,6 +1039,7 @@ end
 
 --打开微信
 extension.openWechat = function ()
+    local ok, text
     if gt.isAndroidPlatform() then
         ok, text = extension.luaBridge.callStaticMethod(
              APIClass,
@@ -663,6 +1047,9 @@ extension.openWechat = function ()
 		 	nil,
              '()V'
          )
+         if true == ok then
+            gt.openWX = true
+         end
     elseif (gt.isIOSPlatform()) then
         cc.Application:getInstance():openURL("wechat://")
     end
@@ -723,53 +1110,24 @@ extension.qqShareMsg = function (msgDict, call_back)
     end
     extension.callBackHandler[extension.qq_share] = call_back --注册回调函数
 
-    if gt.isAndroidPlatform() then
-        extension.getQQLogin(function (respJson)
-            gt.dump(respJson, "getQQLogin callback")
-            local qqRet = respJson
-            if 1 == qqRet.status then
-                local userInfo = string.split(qqRet.code, "|")
-                local transUserInfo = {}
-                for i=1, #userInfo-1, 2 do
-                    transUserInfo[userInfo[i]] = userInfo[i+1]
-                end
-                if "0" ~= transUserInfo.ret then
-                    gt.log("detailRetCode:"..transUserInfo.ret)
-                    require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), gt.getLocationString("LTKey_0090"), nil, nil, true)
-                    return
-                else
-                    gt.openQQShare = true
-                    extension.luaBridge.callStaticMethod(
-                        APIClass,
-                        'qqShareMsg',
-			            {msgDict.text == nil and "" or msgDict.text, 
-                        msgDict.absoluteImage == nil and "" or msgDict.absoluteImage,
-                        msgDict.title == nil and "" or msgDict.title, 
-                        msgDict.description == nil and "" or msgDict.description, 
-                        msgDict.url == nil and "" or msgDict.url, 
-                        msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl,
-                        msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl},
-                        '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
-                    )
-                end
-            elseif 0 == qqRet.status then
-                gt.log("qqRet status is 0, error")
-            end
-       end)
+    if (gt.isAndroidPlatform()) then
+        extension.luaBridge.callStaticMethod(
+            APIClass,
+            'qqShareMsg',
+			{msgDict.text == nil and "" or msgDict.text, 
+            msgDict.absoluteImage == nil and "" or msgDict.absoluteImage,
+            msgDict.title == nil and "" or msgDict.title, 
+            msgDict.description == nil and "" or msgDict.description, 
+            msgDict.url == nil and "" or msgDict.url, 
+            msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl,
+            msgDict.previewImgUrl == nil and "" or msgDict.previewImgUrl},
+            '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V'
+        )
     elseif (gt.isIOSPlatform()) then
-        extension.getQQLogin(function (respJson)
-           local qqRet = respJson
-           if "0" ~= qqRet.detailRetCode and "0" ~= qqRet.retCode then
-                gt.log("detailRetCode:"..detailRetCode)
-                require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), gt.getLocationString("LTKey_0090"), nil, nil, true)
-                return
-           else
-                extension.luaBridge.callStaticMethod(
-                    'AppController',
-                    'qqShareMsg',
-                    msgDict
-                )
-           end
-       end)
+        extension.luaBridge.callStaticMethod(
+            'AppController',
+            'qqShareMsg',
+            msgDict
+        )
     end
 end

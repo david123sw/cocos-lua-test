@@ -3,6 +3,7 @@
 --此文件由[BabeLua]插件自动生成
 gt.resetResLookup()
 local cjson = require("cjson")
+require("app/UtilityTools")
 require("app/DefineConfig")
 require("app/localizations/LocationUtil")
 require("app/IntegratedResLookup")
@@ -14,6 +15,8 @@ local EntryMainScene = class("EntryMainScene", function ()
     return cc.Scene:create()
 end)
 
+--国庆节显示标记
+local openNationalDayFlag = true
 local scheduler = cc.Director:getInstance():getScheduler()  
 local schedulerID = nil 
 EntryMainScene.CONSTANTS = {
@@ -34,7 +37,9 @@ EntryMainScene.CONSTANTS = {
         GUILD               = 18,
         SHOP                = 19,
         ACTIVITY            = 20,
-        INVITE_SHARE        = 21
+        INVITE_SHARE        = 21,
+        UPDATE_NOTICE       = 22,
+        SERVER_NOTICE       = 23
     }
 }
 
@@ -57,6 +62,100 @@ function EntryMainScene:ctor()
 
     self:initDisplay()
     self:registerScriptHandler(handler(self, self.onNodeEvent))
+end
+
+function EntryMainScene:changeClassicResForNationalDay()
+    if true == openNationalDayFlag then
+        self.disObjs.btnInvite:loadTextureNormal(RES_REF.IMG.ND_VERIFICATION_CODE)
+	    self.disObjs.btnInvite:ignoreContentAdaptWithSize(true)
+	    self.disObjs.btnAccountAuthorized:loadTextureNormal(RES_REF.IMG.ND_ID_VERIFICATION)
+	    self.disObjs.btnAccountAuthorized:ignoreContentAdaptWithSize(true)
+	    self.disObjs.btnShop:loadTextureNormal(RES_REF.IMG.ND_SHOP)
+	    self.disObjs.btnShop:ignoreContentAdaptWithSize(true)
+        self.disObjs.btnShop:setPositionY(50)
+	    self.disObjs.btnActivity:loadTextureNormal(RES_REF.IMG.ND_ACTIVITY)
+	    self.disObjs.btnActivity:ignoreContentAdaptWithSize(true)
+	    self.disObjs.btnShare:loadTextureNormal(RES_REF.IMG.ND_SHARE)
+	    self.disObjs.btnShare:ignoreContentAdaptWithSize(true)
+        self.disObjs.btnShare:setPositionY(48)
+	    self.disObjs.btnMatch:loadTextureNormal(RES_REF.IMG.ND_MATCH)
+	    self.disObjs.btnMatch:ignoreContentAdaptWithSize(true)
+        self.disObjs.btnMatch:setPositionY(49)
+	    self.disObjs.btnRecord:loadTextureNormal(RES_REF.IMG.ND_RECORD)
+	    self.disObjs.btnRecord:ignoreContentAdaptWithSize(true)
+        self.disObjs.btnRecord:setPositionY(42.5)
+	    self.disObjs.btnMenu:loadTextureNormal(RES_REF.IMG.ND_MENU)
+	    self.disObjs.btnMenu:ignoreContentAdaptWithSize(true)
+        self.disObjs.btnMenu:setPositionY(49)
+
+        local fireworks = self.disObjs.btnShopNew:getChildByName("fireworks")
+        if nil == fireworks then
+            fireworks = cc.Sprite:create(RES_REF.IMG.ND_SHOP_BKG_NEW)
+            fireworks:setPosition(cc.p(239, 108))
+            fireworks:setAnchorPoint(cc.p(0.5, 0.5))
+            fireworks:setName("fireworks")
+            self.disObjs.btnShopNew:addChild(fireworks)
+        end
+
+        local redFlag = self.disObjs.imgPortrait:getChildByName("redFlag")
+        if nil == redFlag then
+            redFlag = cc.Sprite:create(RES_REF.IMG.ND_HEAD_RED_FLAG)
+            redFlag:setPosition(cc.p(-10, 0))
+            redFlag:setAnchorPoint(cc.p(0, 0))
+            redFlag:setName("redFlag")
+            self.disObjs.imgPortrait:addChild(redFlag)
+        end
+
+        local threeBtns = {self.disObjs.btnCreateRoom, self.disObjs.btnJoinRoom, self.disObjs.btnGuild}
+        for i=1, #threeBtns do
+            require("app/DragonBoneCreator"):create({
+            skeDataPath="images/guoqing/ballon/balloon_1_ske.json",
+            texDataPath="images/guoqing/ballon/balloon_1_tex.json",
+            armatureName="armatureName",
+            animationName="newAnimation",
+            armaturePos=cc.p(151, 353),
+            armatureSpeed=0.2,
+            targetNode=threeBtns[i]})
+        end
+    end
+end
+
+function EntryMainScene:changePopularResForNationalDay()
+    if true == openNationalDayFlag then
+	    self.disObjs.btnAccountAuthorizedNew:loadTextureNormal(RES_REF.IMG.ND_ID_VERIFICATION_NEW)
+	    self.disObjs.btnAccountAuthorizedNew:ignoreContentAdaptWithSize(true)
+	    self.disObjs.btnInviteNew:loadTextureNormal(RES_REF.IMG.ND_VERIFICATION_CODE_NEW)
+	    self.disObjs.btnInviteNew:ignoreContentAdaptWithSize(true)
+	    self.disObjs.btnServiceNew:loadTextureNormal(RES_REF.IMG.ND_SERVICE_NEW)
+	    self.disObjs.btnServiceNew:ignoreContentAdaptWithSize(true)
+
+        local fireworks = self.disObjs.btnShopNew:getChildByName("fireworks")
+        if nil == fireworks then
+            fireworks = cc.Sprite:create(RES_REF.IMG.ND_SHOP_BKG_NEW)
+            fireworks:setPosition(cc.p(239, 108))
+            fireworks:setAnchorPoint(cc.p(0.5, 0.5))
+            fireworks:setName("fireworks")
+            self.disObjs.btnShopNew:addChild(fireworks)
+        end
+
+        local redFlag = self.disObjs.imgPortrait:getChildByName("redFlag")
+        if nil == redFlag then
+            redFlag = cc.Sprite:create(RES_REF.IMG.ND_HEAD_RED_FLAG)
+            redFlag:setPosition(cc.p(-10, 0))
+            redFlag:setAnchorPoint(cc.p(0, 0))
+            redFlag:setName("redFlag")
+            self.disObjs.imgPortrait:addChild(redFlag)
+        end
+
+        require("app/DragonBoneCreator"):create({
+        skeDataPath="images/guoqing/ballon/balloon_1_ske.json",
+        texDataPath="images/guoqing/ballon/balloon_1_tex.json",
+        armatureName="armatureName",
+        animationName="newAnimation",
+        armaturePos=cc.p(215, 145),
+        armatureSpeed=0.2,
+        targetNode=self.disObjs.btnShopNew})
+    end
 end
 
 function EntryMainScene:initDisplay()
@@ -188,11 +287,11 @@ function EntryMainScene:initDisplay()
     gt.addBtnPressedListener(self.disObjs.btnMatch, function (target, event)
         gt.log("click match")
         require("app/views/CommonTips"):create(gt.getLocationString("LTKey_0063"))
-        
-        local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
-        local title = "吆玩桂林字牌"
-        local url = gt.shareWeb
-        local previewImgUrl = "http://"..gt.LoginServer.ip.."/yaowangl/hotupdate/default_icons/Icon-120.png"
+
+--        local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
+--        local title = "吆玩桂林字牌"
+--        local url = gt.shareWeb
+--        local previewImgUrl = "http://"..gt.LoginServer.ip.."/yaowangl/hotupdate/default_icons/Icon-120.png"
         --    extension.qqShareMsg({title=title, description=description, url=url, previewImgUrl=previewImgUrl}, function(resp)
         --        gt.dump(resp, "qqShareMsg")
         --    end)
@@ -267,6 +366,7 @@ function EntryMainScene:initDisplay()
         gt.log("进入体验场")
         local msg = {cmd=277, game_type=600}
         gt.socketClient:sendMessage(msg)
+        self.disObjs.btnExperience:setTouchEnabled(false)
     end)
 
     self.disObjs.btnRecord = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "btnRecord")
@@ -367,7 +467,8 @@ function EntryMainScene:initDisplay()
     marqueeMsg:setName("MarqueeMsg")
 	marqueeNode:addChild(marqueeMsg)
 	self.marqueeMsg = marqueeMsg
-	self.marqueeMsg:showMsg("欢迎来到吆玩桂林字牌，祝您游戏愉快。本游戏仅供娱乐，禁止参与赌博！")
+	self.marqueeMsg:showMsg("欢迎来到吆玩桂林字牌。本游戏仅供娱乐，禁止参与赌博！")
+    --                   热烈庆祝中华人民共和国成立69周年，祝广大玩家节日快乐！
 	if gt.marqueeMsgTemp then
 		self.marqueeMsg:showMsg(gt.marqueeMsgTemp)
 		gt.marqueeMsgTemp = nil
@@ -398,14 +499,14 @@ function EntryMainScene:initDisplay()
     self.disObjs.imgBottomMenusNew:setVisible(false)
 
     self.disObjs.layoutLightNode = ccui.Helper:seekWidgetByName(self.disObjs.layoutRoomMenuNew, "layoutLightNode")
-    require("app/DragonBoneCreator"):create({
-    skeDataPath="effects/main2Light/eff_main2_light_ske.json",
-    texDataPath="effects/main2Light/eff_main2_light_tex.json",
-    armatureName="armatureName",
-    animationName="newAnimation",
-    armatureSpeed=0.50,
-    armatureScale=1,
-    targetNode=self.disObjs.layoutLightNode})
+        require("app/DragonBoneCreator"):create({
+        skeDataPath="effects/main2Light/eff_main2_light_ske.json",
+        texDataPath="effects/main2Light/eff_main2_light_tex.json",
+        armatureName="armatureName",
+        animationName="newAnimation",
+        armatureSpeed=0.50,
+        armatureScale=1,
+        targetNode=self.disObjs.layoutLightNode})
 
     self.disObjs.imgSwitcherGuild = ccui.Helper:seekWidgetByName(self.disObjs.imgGuildInfoNew, "imgSwitcherGuild")
     self.disObjs.imgSwitcherGuildDesc = ccui.Helper:seekWidgetByName(self.disObjs.imgGuildInfoNew, "imgSwitcherGuildDesc")
@@ -439,8 +540,6 @@ function EntryMainScene:initDisplay()
         if TOUCH_EVENT_ENDED == event then
             gt.log("竞技场快照")
             require("app/views/CommonTips"):create(gt.getLocationString("LTKey_0063"))
---            self.disObjs.imgSwitcherGuild:setVisible(false)
---            self.disObjs.imgSwitcherMatch:setVisible(true)
         end
     end)
     self.disObjs.imgNoInfoTip = ccui.Helper:seekWidgetByName(self.disObjs.imgGuildInfoNew, "imgNoInfoTip")
@@ -453,10 +552,7 @@ function EntryMainScene:initDisplay()
     self.disObjs.lvItemsNewItem = self.disObjs.lvItemsNew:getItem(0)
     self.disObjs.lvItemsNewItem:retain()
     self.disObjs.lvItemsNew:removeAllChildren()
---    if nil ~= gt.noneGuildRoomsCreated then
---        self.disObjs.imgNoInfoTip:setVisible(gt.noneGuildRoomsCreated)
---        self.disObjs.imgLittleGirl:setVisible(gt.noneGuildRoomsCreated)
---    end
+
     --统一默认不显示
     self.disObjs.imgNoInfoTip:setVisible(false)
     self.disObjs.imgLittleGirl:setVisible(false)
@@ -537,6 +633,7 @@ function EntryMainScene:initDisplay()
         gt.log("进入体验场")
         local msg = {cmd=277, game_type=600}
         gt.socketClient:sendMessage(msg)
+        self.disObjs.btnExperienceNew:setTouchEnabled(false)
     end)
     self.disObjs.btnMenuNew = ccui.Helper:seekWidgetByName(self.disObjs.imgBottomMenusNew, "btnMenuNew")
     gt.addBtnPressedListener(self.disObjs.btnMenuNew, function (target, event)
@@ -558,6 +655,7 @@ function EntryMainScene:initDisplay()
         local accountAuthorizedScene = require("app/views/AccountAuthorizedScene"):create({owner=self})
 	    self:addChild(accountAuthorizedScene, EntryMainScene.CONSTANTS.ZOrder.REALNAME)
     end)
+
     self.disObjs.btnInviteNew = ccui.Helper:seekWidgetByName(self.disObjs.layoutBottom, "btnInviteNew")
     self.disObjs.btnInviteNew:setVisible(false)
     gt.addBtnPressedListener(self.disObjs.btnInviteNew, function (target, event)
@@ -633,6 +731,12 @@ function EntryMainScene:onGuildCreatedRoomRefreshRespond(msgTbl)
                 break
             end
         end
+
+        if 0 == #self.disObjs.lvItemsNew:getItems() then
+            self.disObjs.imgNoInfoTip:setVisible(true)
+            self.disObjs.imgLittleGirl:setVisible(true)
+            self.disObjs.imgLvTitleBkg:setVisible(false)
+        end
     else
         local isUpdateNew = false
         for i=1, #items do
@@ -693,6 +797,9 @@ function EntryMainScene:onGuildCreatedRoomRefreshRespond(msgTbl)
                 end
             end)
             self.disObjs.lvItemsNew:pushBackCustomItem(copy)
+            self.disObjs.imgNoInfoTip:setVisible(false)
+            self.disObjs.imgLittleGirl:setVisible(false)
+            self.disObjs.imgLvTitleBkg:setVisible(true)
         end
     end
 end
@@ -735,12 +842,7 @@ function EntryMainScene:onGuildInfoNewRespond(msgTbl)
                 roomInfo.roomid = data.room_id
                 roomInfo.curPlayerNum = data.cur_player_count
                 roomInfo.club = "club"
---                替换原始只有微信分享
---                gt.shareZipaiRoomInfo(roomInfo)
-                local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
-		        local title = "吆玩桂林字牌"
-                local shareScene = require("app/views/ShareScene"):create({description=description, title=title, url=gt.shareWeb, roomInfo=roomInfo})
-		        self:addChild(shareScene, EntryMainScene.CONSTANTS.ZOrder.INVITE_SHARE)
+                gt.shareZipaiRoomInfo(roomInfo)
             end)
             copy:setTouchEnabled(true)
             copy:addTouchEventListener(function (target, event)
@@ -782,6 +884,9 @@ function EntryMainScene:onAccountLogoutStatus(msgTbl)
         gt.recordedGuildID = nil
         gt.noneGuildRoomsCreated = nil
         gt.isCurGuildOwner = nil
+        cc.UserDefault:getInstance():setStringForKey("last_auto_login_info", cjson.encode({login_mode="none", open_id=""}))
+        cc.UserDefault:getInstance():setStringForKey("vcode", "")
+        require("app/DragonBoneCreator"):disposeAllDBs()
 		gt.socketClient:close()
 		local loginScene = require("app/views/LoginScene"):create()
 		cc.Director:getInstance():replaceScene(loginScene)
@@ -808,7 +913,7 @@ end
 
 function EntryMainScene:onMainSceneGuildRoomsUpdated(event, data)
     gt.log("-------onMainSceneGuildRoomsUpdated---------")
-    gt.dump(data)
+--    gt.dump(data)
     if nil ~= data and nil ~= data.rooms then
         if self.dymAttrs.mainSceneGuildID == data.guildID then
             self.disObjs.imgNoInfoTip:setVisible(table.nums(data.rooms) == 0)
@@ -833,6 +938,7 @@ function EntryMainScene:onMainSceneStyleUpdated(event, data)
             self.disObjs.btnInviteNew:setVisible(false)
 
             self.disObjs.imgLogo:setVisible(true)
+            self.disObjs.imgLogo:setPositionX(self.disObjs.imgTitle:getContentSize().width * 0.5)
             self.disObjs.imgBottomMenus:setVisible(true)
             self.disObjs.btnCreateRoom:setVisible(true)
             self.disObjs.btnJoinRoom:setVisible(true)
@@ -847,6 +953,9 @@ function EntryMainScene:onMainSceneStyleUpdated(event, data)
             self.disObjs.marqueeNodeBkg:loadTexture(RES_REF.IMG.MAIN_SCENE_CLASSIC_NOTICE_BKG, gt.defaultImageLoadedType)
             self.disObjs.marqueeNodeBkg:setContentSize(cc.size(665, 44))
             self:newShopEffects(false)
+
+            --国庆特辑
+--            self:changeClassicResForNationalDay()
         elseif "popular" == data.style then
             self.disObjs.imgBkg:loadTexture(RES_REF.IMG.MAIN_SCENE_POPULAR_BKG, gt.defaultImageLoadedType)
             self.disObjs.imgTitle:loadTexture(RES_REF.IMG.MAIN_SCENE_POPULaR_TOP_TITLE, gt.defaultImageLoadedType)
@@ -874,6 +983,8 @@ function EntryMainScene:onMainSceneStyleUpdated(event, data)
             self.disObjs.marqueeNodeBkg:setContentSize(cc.size(665, 35))
             self:newShopEffects(true)
 
+            --国庆特辑
+--            self:changePopularResForNationalDay()
             local msgToSend = {}
 	        msgToSend.cmd = gt.CLUB_LIST
             msgToSend.snapshot = true
@@ -888,8 +999,7 @@ function EntryMainScene:onExitFromReplay(event, data)
         if not tolua.isnull(prevGuild) then
             prevGuild:removeFromParent()
         end
-        
-        local historyRecord = require("app/views/CombatGains"):create(gt.playerData.uid, data)
+        local historyRecord = require("app/views/CombatGains"):create(gt.playerData.uid, data, data.guildID)
         historyRecord:setName("CombatGains")
 		self:addChild(historyRecord, EntryMainScene.CONSTANTS.ZOrder.HISTORY_RECORD)
     end
@@ -898,14 +1008,20 @@ end
 function EntryMainScene:onBackMainSceneReceived(code, code2)
     if code2 == gt.BackMainSceneCode.BE_KICKED then
         require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), "您已被房间管理员请离房间", nil, nil, true, self)
+    elseif code2 == gt.BackMainSceneCode.BE_KICKED_FANGZHU then
+        require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), "您已被房主请离房间", nil, nil, true, self)
     elseif code2 == gt.BackMainSceneCode.BE_KICKED_CLUB then
         require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), "您已被牌友圈管理员请离房间", nil, nil, true, self)
     elseif code2 == gt.BackMainSceneCode.DISMISS_ROOM then
         require("app/views/CommonTips"):create("房间已解散",self)
     elseif code2 == gt.BackMainSceneCode.DISMISS_LEADER then
         require("app/views/CommonTips"):create("房间管理员已解散房间",self)
+    elseif code2 == gt.BackMainSceneCode.DISMISS_FANGZHU then
+        require("app/views/CommonTips"):create("房主已解散房间",self)
     elseif code2 == gt.BackMainSceneCode.DISMISS_VOTE then
         require("app/views/CommonTips"):create("房间已解散", self)
+    elseif code2 == gt.BackMainSceneCode.BE_KICKED_CARDS_LESS then
+        require("app/views/CommonTips"):create("房卡不足，无法继续游戏", self)
     end
 
     if gt.hallSettings.MusicBgVolume == "on" then
@@ -1026,14 +1142,24 @@ function EntryMainScene:onGuildListRespond(msgTbl)
         if true == msgTbl.snapshot then
             --牌友圈房间简介显示
             local count = table.nums(msgTbl.list)
+            local roomFound = false
             if 0 < count then
-                local firstGuildInfo = msgTbl.list[1]--count
-                local msgToSend = {}
-                msgToSend.cmd = gt.CLUB_INFO_NEW
-                msgToSend.club_id = firstGuildInfo.id
-	            gt.socketClient:sendMessage(msgToSend)
-                self.dymAttrs.noneGuildCreated = false
-                self.dymAttrs.mainSceneGuildID = firstGuildInfo.id
+                for i=1, count do
+                    if msgTbl.list[i].count > 0 then
+                        local firstGuildInfo = msgTbl.list[i]
+                        local msgToSend = {}
+                        msgToSend.cmd = gt.CLUB_INFO_NEW
+                        msgToSend.club_id = firstGuildInfo.id
+	                    gt.socketClient:sendMessage(msgToSend)
+                        self.dymAttrs.noneGuildCreated = false
+                        self.dymAttrs.mainSceneGuildID = firstGuildInfo.id
+                        break
+                    end
+                end
+
+                if not roomFound then
+                    self.disObjs.lvItemsNew:removeAllChildren()
+                end
             else
                 self.dymAttrs.noneGuildCreated = true
                 self.disObjs.imgNoInfoTip:setVisible(true)
@@ -1086,6 +1212,8 @@ function EntryMainScene:reLogin()
         msgToSend.app_id = gt.app_id
 		gt.socketClient:sendMessage(msgToSend)
 	end
+
+    self.disObjs.btnExperience:setTouchEnabled(true)
 end
 
 function EntryMainScene:onRcvEnterGame(msgTbl)
@@ -1108,8 +1236,7 @@ function EntryMainScene:onRcvEnterGame(msgTbl)
 		gt.removeTargetAllEventListener(self)
         if msgTbl.game_type == gt.GameType.GAME_GLZP then
             --require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), "创建房间成功，等待添加房间UI", nil, nil, true)
-            require("app/DragonBoneCreator").cacheDBObjs = {}
-            db.CCFactory:getInstance():clear()
+            require("app/DragonBoneCreator"):disposeAllDBs()
             local gameScene =  require("app/views/GuilinZipaiScene"):create(msgTbl)
             cc.Director:getInstance():replaceScene(gameScene)
         else
@@ -1155,6 +1282,7 @@ function EntryMainScene:onRcvWatchReplay(msgTbl)
         end
 	    require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), errorMsg, nil, nil, true)
     else
+        require("app/DragonBoneCreator"):disposeAllDBs()
         local replayScene = require("app/views/GuilinZipaiReplay"):create(msgTbl, nil, msgTbl.seat)
         cc.Director:getInstance():replaceScene(replayScene)
 	end
@@ -1163,8 +1291,13 @@ end
 function EntryMainScene:onRcvPayResult(msgTbl)
 	if msgTbl.code == 0 then
 		local count = msgTbl.count
-		local rechargeSucess = require("app/views/ChargedNotice"):create(2, count, msgTbl.payMoney, msgTbl.chargeUser)
-		self:addChild(rechargeSucess, EntryMainScene.CONSTANTS.ZOrder.PAY_RESULT)
+        local source = msgTbl.source
+        if 3 == source then
+            gt.log("客服代为充值")
+        else
+        	local rechargeSucess = require("app/views/ChargedNotice"):create(2, count, msgTbl.payMoney, msgTbl.chargeUser)
+		    self:addChild(rechargeSucess, EntryMainScene.CONSTANTS.ZOrder.PAY_RESULT)
+        end
 	else
 		require("app/views/NoticeTips"):create(gt.getLocationString("LTKey_0007"), gt.getLocationString("LTKey_0060"), nil, nil, true)
 	end
@@ -1249,17 +1382,19 @@ function EntryMainScene:joinRoomFromUrl()
 		    gt.socketClient:sendMessage(msgToSend)
             gt.socketClient:registerMsgListener(gt.ROOM_REPLAY, self, self.onRcvWatchReplay)
         elseif guildID and guildID > 0 then
---            local guild = require("app/views/GuildMainScene"):create({openJoinDlg=true, guildID=guildID})
---		    self:addChild(guild, MainScene.ZOrder.SHARE)
+            --牌友圈状态保留
             if true == gt.guildMainSceneOpend then
                 local guild = self:getChildByName("guildMainScene")
                 if nil ~= guild then
-                    guild:removeFromParent()
+                    local guildPreCreateScene = require("app/views/GuildPreCreateScene"):create({showType="join", guildID=guildID})
+                    guildPreCreateScene:setName("guildPreCreateScene")
+	                guild:addChild(guildPreCreateScene)
                 end
+            else
+                local guildPreCreateScene = require("app/views/GuildPreCreateScene"):create({showType="join", guildID=guildID})
+                guildPreCreateScene:setName("guildPreCreateScene")
+	            self:addChild(guildPreCreateScene)
             end
-            local guildPreCreateScene = require("app/views/GuildPreCreateScene"):create({showType="join", guildID=guildID})
-            guildPreCreateScene:setName("guildPreCreateScene")
-	        self:addChild(guildPreCreateScene)
             return false
         else
             return false
@@ -1282,6 +1417,7 @@ function EntryMainScene:hasServerMaintainceNotice(owner, isIgnore)
     end
     owner.xhr.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
     local url = gt.SERVER_MAINTAIN_NOTICE
+    url = "http://"..gt.LoginServer.ip..":81/notice_get"
 
     owner.xhr:open("GET", url)
     owner.xhr:registerScriptHandler(function ()
@@ -1334,11 +1470,11 @@ function EntryMainScene:hasServerMaintainceNotice(owner, isIgnore)
             if nil == isIgnore then
                 owner.serverNoticeTitle = 0 < #xhrParsedResp.title and unicode_to_utf8(xhrParsedResp.title) or ""
                 owner.serverNoticeBody = 0 < #xhrParsedResp.body and unicode_to_utf8(xhrParsedResp.body) or ""
-                gt.log("---sziee#owner.serverNoticeBody__:"..#owner.serverNoticeBody)
-                gt.log("---sziee_#owner.serverNoticeTitle_:"..#owner.serverNoticeTitle)
+--                gt.log("---sz#owner.serverNoticeBody__:"..#owner.serverNoticeBody)
+--                gt.log("---sz#owner.serverNoticeTitle_:"..#owner.serverNoticeTitle)
                 if #owner.serverNoticeBody > 0 then
                     local agreementPanel = require("app/views/ServerNotice"):create(owner.serverNoticeTitle, owner.serverNoticeBody)
-                    owner:addChild(agreementPanel, 6)
+                    owner:addChild(agreementPanel, EntryMainScene.CONSTANTS.ZOrder.SERVER_NOTICE)
                     gt.hasServerMaintainceNoticeDisplayed = true
                 end	            
             else
@@ -1359,9 +1495,113 @@ function EntryMainScene:hasServerMaintainceNotice(owner, isIgnore)
     owner.xhr:send()
 end
 
+function EntryMainScene:hasVersionUpdateLogs(owner)
+    if gt.hasVersionUpdateLogDisplayed then
+        return
+    end
+
+    gt.showLoadingTips("")
+
+    if owner.xhrForUpdateLog == nil then
+        owner.xhrForUpdateLog = cc.XMLHttpRequest:new()
+        owner.xhrForUpdateLog.timeout = 30 -- 设置超时时间
+    end
+    owner.xhrForUpdateLog.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+    gt.VERSION_UPDATE_LOG_QA = gt.VERSION_UPDATE_LOG_QA or "http://47.98.47.131:81/updateinfo_get"
+    gt.VERSION_UPDATE_LOG_RE = gt.VERSION_UPDATE_LOG_RE or "http://47.98.167.36/updateinfo_get"
+    local url = gt.VERSION_UPDATE_LOG_QA
+    if gt.LoginServer.ip == "47.98.47.131" then
+        url = gt.VERSION_UPDATE_LOG_QA
+    else
+        url = gt.VERSION_UPDATE_LOG_RE
+    end
+
+    owner.xhrForUpdateLog:open("GET", url)
+    owner.xhrForUpdateLog:registerScriptHandler(function ()
+        if owner.xhrForUpdateLog.readyState == 4 and (owner.xhrForUpdateLog.status >= 200 and owner.xhrForUpdateLog.status < 207) then
+
+        gt.removeLoadingTips()
+
+        local bit = require("bit")
+        local function unicode_to_utf8(convertStr)
+            if type(convertStr)~="string" then
+                return convertStr
+            end
+
+            local resultStr=""
+                local i=1
+            while true do
+                local num1=string.byte(convertStr,i)
+                local unicode
+
+                if num1~=nil and string.sub(convertStr,i,i+1)=="\\u" then
+                    unicode=tonumber("0x"..string.sub(convertStr,i+2,i+5))
+                    i=i+6
+                elseif num1~=nil then
+                    unicode=num1
+                    i=i+1
+                else
+                    break
+                end
+
+                if unicode <= 0x007f then
+                    resultStr=resultStr..string.char(bit.band(unicode,0x7f))
+                elseif unicode >= 0x0080 and unicode <= 0x07ff then
+                    resultStr=resultStr..string.char(bit.bor(0xc0,bit.band(bit.rshift(unicode,6),0x1f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
+                elseif unicode >= 0x0800 and unicode <= 0xffff then
+                    resultStr=resultStr..string.char(bit.bor(0xe0,bit.band(bit.rshift(unicode,12),0x0f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(bit.rshift(unicode,6),0x3f)))
+                    resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
+                end
+            end
+            resultStr=resultStr..''
+            return resultStr
+        end
+
+        require("json")
+        local prepare, num = string.gsub(owner.xhrForUpdateLog.response, "\\", "\\\\")
+        local xhrParsedResp = json.decode(prepare)
+        gt.dump(xhrParsedResp, "------------------xxxxxxxxxxxxxxxxxxxxx")
+        local showVersionUpdateLogs = false
+        local versionUpdateSN = cc.UserDefault:getInstance():getStringForKey("versionUpdateSN")
+        gt.log("--------versionUpdateSN-----:"..versionUpdateSN)
+        if "" == versionUpdateSN then
+            if 0 < #xhrParsedResp.sn and 0 < #xhrParsedResp.body then
+                showVersionUpdateLogs = true
+            end
+        else
+            if tonumber(xhrParsedResp.sn) > tonumber(versionUpdateSN) then
+                showVersionUpdateLogs = true
+            end
+
+            if 0 == #xhrParsedResp.body then
+                showVersionUpdateLogs = false
+            end
+        end
+
+        if showVersionUpdateLogs then
+            local versionUpdateLog = require("app/views/VersionReleaseLog"):create(unicode_to_utf8(xhrParsedResp.sn), unicode_to_utf8(xhrParsedResp.body))
+            owner:addChild(versionUpdateLog, EntryMainScene.CONSTANTS.ZOrder.UPDATE_NOTICE)
+            gt.hasVersionUpdateLogDisplayed = true
+            cc.UserDefault:getInstance():setStringForKey("versionUpdateSN", xhrParsedResp.sn)
+        end
+
+        elseif owner.xhrForUpdateLog.readyState == 1 and owner.xhrForUpdateLog.status == 0 then
+            -- 网络问题,异常断开
+            gt.removeLoadingTips()
+        end
+        owner.xhrForUpdateLog:unregisterScriptHandler()
+    end)
+    owner.xhrForUpdateLog:send()
+end
+
 function EntryMainScene:onNodeEvent(eventName)
 	if "enter" == eventName then
         gt.log("-----------EntryMainScene--------onNodeEvent--------enter-------")
+        extension.stopVoicePlay()
+        gt.soundEngine:clearVoicePlayQueue()
+
 		if not self:joinRoomFromUrl() then	-- 先检测，发现没有房间ID再启动定时器监视
             self.scheduleHandler = gt.scheduler:scheduleScriptFunc(handler(self, self.joinRoomFromUrl), 1.25, false)
 		end
@@ -1374,8 +1614,10 @@ function EntryMainScene:onNodeEvent(eventName)
 	      require("app/views/CommonTips"):create(self.showMoveText)
 	    end
 
+        self:hasVersionUpdateLogs(self)
         self:hasServerMaintainceNotice(self)
 	elseif "exit" == eventName then
+        gt.log("-----------EntryMainScene--------onNodeEvent--------exit-------")
 		if self.scheduleHandler then
 			gt.scheduler:unscheduleScriptEntry(self.scheduleHandler)
 			self.scheduleHandler = nil
@@ -1395,6 +1637,14 @@ function EntryMainScene:onNodeEvent(eventName)
         gt.removeTargetEventListenerByType(self, gt.EventType.BACK_FROM_REPLAY)
         gt.removeTargetEventListenerByType(self, gt.EventType.MAIN_SCENE_STYLE_UPDATED)
         gt.removeTargetEventListenerByType(self, gt.EventType.MAIN_SCENE_GUILD_ROOMS_UPDATED)
+
+        gt.socketClient:unregisterMsgListener(gt.CLUB_LIST)
+        gt.socketClient:unregisterMsgListener(gt.CLUB_CREATE)
+        gt.socketClient:unregisterMsgListener(gt.CLUB_JOIN)
+        gt.socketClient:unregisterMsgListener(gt.CLUB_INFO_NEW)
+        gt.socketClient:unregisterMsgListener(gt.CLUB_REFRESH_ROOM_CURRENT)
+        gt.socketClient:unregisterMsgListener(gt.CLUB_SYS_MESSAGE)
+
         if nil ~= realNameScheduleHandler then
             gt.scheduler:unscheduleScriptEntry(self.realNameScheduleHandler)
             cc.UserDefault:getInstance():setStringForKey("RealNameCoolDown", tostring(self.realNameStartSecond))

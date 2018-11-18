@@ -1,11 +1,19 @@
 package org.extension;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.game.AppActivity;
 import org.game.Constant;
@@ -29,6 +37,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -44,16 +53,44 @@ import android.provider.MediaStore.MediaColumns;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.ViewConfiguration;
+import android.view.WindowManager;
 
+import com.android.dingtalk.share.ddsharemodule.DDShareApiFactory;
+import com.android.dingtalk.share.ddsharemodule.IDDShareApi;
+import com.android.dingtalk.share.ddsharemodule.message.DDImageMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDMediaMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDTextMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDWebpageMessage;
+import com.android.dingtalk.share.ddsharemodule.message.DDZhiFuBaoMesseage;
+import com.android.dingtalk.share.ddsharemodule.message.SendAuth;
+import com.android.dingtalk.share.ddsharemodule.message.SendMessageToDD;
+import com.android.dingtalk.share.ddsharemodule.plugin.SignatureCheck;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import org.xianliao.im.sdk.api.ISGAPI;
+import org.xianliao.im.sdk.api.SGAPIFactory;
+import org.xianliao.im.sdk.constants.SGConstants;
+import org.xianliao.im.sdk.modelmsg.SGGameObject;
+import org.xianliao.im.sdk.modelmsg.SGImageObject;
+import org.xianliao.im.sdk.modelmsg.SGMediaMessage;
+import org.xianliao.im.sdk.modelmsg.SGTextObject;
+import org.xianliao.im.sdk.modelmsg.SendMessageToSG;
 /**
  * 
  * @author yangyi
@@ -65,6 +102,8 @@ public class ExtensionApi {
     public final static String TYPE_ALI_PAY = "ali_pay";
     public final static String TYPE_QQ_LOGIN = "qq_login";
     public final static String TYPE_QQ_SHARE = "qq_share";
+    public final static String TYPE_SCREEN_HORIZONTAL_FLIP = "horizontal_flip";
+    public final static String TYPE_POWER_CHARGING_STATUS = "power_charging_status";
     
     public final static String voice_get_url 		= "voice_url";
     public final static String voice_finish 		= "voice_finish";
@@ -102,31 +141,375 @@ public class ExtensionApi {
 	}
 	
 	/**
-	 * 
+	 *Ignored
 	 */
-	public static void test() {
+	public static void test(final String msg) {
 		appActivity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				AlertDialog alertDialog = new AlertDialog.Builder(appActivity).create();
-				alertDialog.setTitle("title");
-				alertDialog.setMessage("message");
+				alertDialog.setTitle("Alert");
+				alertDialog.setMessage(msg);
 				alertDialog.show();
 			}
 		});
 	}
-	 
+	
+	public static void setRequestedOrientation(final String so) {
+		appActivity.setRequestedOrientation(so);
+	}
+	
+	public static String getDeviceInfo() {
+		Log.d("PhoneInfo-----PRODUCT------>", Build.PRODUCT);
+		Log.d("PhoneInfo-----BRAND------>", Build.BRAND);
+		Log.d("PhoneInfo-----MANUFACTURER------>", Build.MANUFACTURER);
+		Log.d("PhoneInfo-----HARDWARE------>", Build.HARDWARE);
+		Log.d("PhoneInfo-----MODEL------>", Build.MODEL);
+		Log.d("PhoneInfo-----Build.VERSION.RELEASE------>", Build.VERSION.RELEASE);
+		String info = "{";
+		info += "\"product\":\"" + Build.PRODUCT + "\",";
+		info += "\"brand\":\"" + Build.BRAND + "\",";
+		info += "\"manufacturer\":\"" + Build.MANUFACTURER + "\",";
+		info += "\"hardware\":\"" + Build.HARDWARE + "\",";
+		info += "\"model\":\"" + Build.MODEL + "\",";
+		info += "\"release\":\"" + Build.VERSION.RELEASE + "\"}";
+		Log.d("PhoneInfo----------->", info);
+		return info;
+	}
+	
+	public static boolean isBatteryCharging() {
+		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = appActivity.registerReceiver(null, ifilter);
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
+		return isCharging;
+	}
+	
+	public static boolean isHuaWeiFullAspect() {		
+		DisplayMetrics dm = appActivity.getResources().getDisplayMetrics();
+		int screenWidth = dm.widthPixels;
+		int screenHeight = dm.heightPixels;
+		float ratio = screenWidth * 1.0f / screenHeight;
+		
+		boolean isHD = 1920 == screenWidth && screenHeight == 1080;
+		return (ratio > 1.86 || isHD ) && Build.MANUFACTURER.equals("HUAWEI") && Build.BRAND.equals("HONOR");
+	}
+	
+	//是否已安装应用宝
+	public static boolean isQQDownloaderInstalled(final String packageName) {
+		final PackageManager packageManager = appActivity.getPackageManager();
+		List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+		List<String> pName = new ArrayList<String>();
+		if (pinfo != null) {
+			for (int i = 0; i < pinfo.size(); i++) {
+				String pn = pinfo.get(i).packageName;
+				pName.add(pn);
+			}
+		}
+		return pName.contains(packageName);
+	}
+	
+	public static void jumpToQQDownloaderAndInstallApp(final String appPackageName) {
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		Uri uri = Uri.parse("market://details?id=" + appPackageName);
+		intent.setData(uri);
+		intent.setPackage("com.tencent.android.qqdownloader");
+		appActivity.startCustomActivity(intent);
+	}
+	
+	public static boolean isXianLiaoInstalled() {
+		boolean isInstalled = appActivity.getXianLiaoShareApi().isSGAppInstalled();
+        return isInstalled;
+	}
+	
+	public static Bitmap getImageFromWeb(String url) {
+		HttpURLConnection conn = null;
+		try {
+			URL tmpURL = new URL(url);
+			conn = (HttpURLConnection)tmpURL.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setConnectTimeout(60000);
+			conn.setReadTimeout(10000);		
+			conn.connect();
+			int respCode = conn.getResponseCode();
+			if(200 == respCode) {
+				InputStream is = conn.getInputStream();
+				Bitmap bitmap = BitmapFactory.decodeStream(is);
+				return bitmap;
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			if(null != conn) {
+				conn.disconnect();
+			}
+		}
+		return null;
+	}
+	
+    public static String saveBitmap(Bitmap mBitmap) {
+        String savePath;
+        File filePic;
+        if (Environment.getExternalStorageState().equals(
+                Environment.MEDIA_MOUNTED)) {
+            savePath = "/sdcard/glzpTmp/";
+        } else {
+            savePath = appActivity.getApplicationContext().getFilesDir().getAbsolutePath() + "/glzpTmp/";
+        }
+        try {
+            filePic = new File(savePath + "glzpTmpCapture" + ".jpg");
+            if (!filePic.exists()) {
+                filePic.getParentFile().mkdirs();
+                filePic.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(filePic);
+            mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return filePic.getAbsolutePath();
+    }
+	
+	public static void shareXianLiao(final String msgType, final String msgText, final String msgTitle, final String msgDescription, final String msgUrl, final String msgPreviewUrl) {
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgType:"+ msgType);
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgText:"+ msgText);
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgTitle:"+ msgTitle);
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgDescription:"+ msgDescription);
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgUrl:"+ msgUrl);
+		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgPreviewUrl:"+ msgPreviewUrl);
+		
+		if(msgType.equals("shareText")) {
+			String textContent = msgText;
+
+	        SGTextObject textObject = new SGTextObject();
+	        textObject.text = textContent;
+
+	        SGMediaMessage msg = new SGMediaMessage();
+	        msg.mediaObject = textObject;
+//	        msg.title = msgTitle;//这个目前不要使用
+
+	        SendMessageToSG.Req req = new SendMessageToSG.Req();
+	        req.transaction = SGConstants.T_TEXT;
+	        req.mediaMessage = msg;
+	        req.scene = SendMessageToSG.Req.SGSceneSession;
+
+	        appActivity.getXianLiaoShareApi().sendReq(req);
+		}else if(msgType.equals("shareUrl")){
+			Bitmap bitmap = getImageFromWeb(msgPreviewUrl);
+	        Bitmap transBitmap = Constant.changeColor(bitmap);
+
+	        SGGameObject gameObject = new SGGameObject(transBitmap);
+	        int andIndex = msgUrl.indexOf("&");
+	        String beforeAnd;
+	        String afterAnd;
+	        if(-1 == andIndex)
+	        {
+	        	beforeAnd = msgUrl;
+	        	afterAnd = "null";
+	        }
+	        else {
+		        beforeAnd = msgUrl.substring(0, andIndex) + "&";
+		        afterAnd = msgUrl.substring(msgUrl.indexOf("&") + 1);
+	        }
+	        gameObject.roomId = beforeAnd;
+	        gameObject.roomToken = afterAnd;
+
+	        //可以自定义邀请应用的下载链接，也可以不填，不填会默认使用应用申请appid时填写的链接
+	        gameObject.androidDownloadUrl = "https://fir.im/ywglzp1";
+	        gameObject.iOSDownloadUrl = "https://fir.im/ywglzp2";
+
+	        SGMediaMessage msg = new SGMediaMessage();
+	        msg.mediaObject = gameObject;
+	        msg.title = msgTitle;
+	        msg.description = msgDescription;
+
+	        SendMessageToSG.Req req = new SendMessageToSG.Req();
+	        req.transaction = SGConstants.T_GAME;
+	        req.mediaMessage = msg;
+	        req.scene = SendMessageToSG.Req.SGSceneSession;
+
+	        appActivity.getXianLiaoShareApi().sendReq(req);
+		}else if(msgType.equals("shareWebImg")) {
+	        Bitmap bitmap = getImageFromWeb(msgPreviewUrl);
+	        Bitmap transBitmap = Constant.changeColor(bitmap);
+
+	        SGImageObject imageObject = new SGImageObject(transBitmap);
+
+	        SGMediaMessage msg = new SGMediaMessage();
+	        msg.mediaObject = imageObject;
+
+	        SendMessageToSG.Req req = new SendMessageToSG.Req();
+	        req.transaction = SGConstants.T_IMAGE;
+	        req.mediaMessage = msg;
+	        req.scene = SendMessageToSG.Req.SGSceneSession;
+
+	        appActivity.getXianLiaoShareApi().sendReq(req);
+		}else if(msgType.equals("shareLocalImg")) {
+	        String path = msgPreviewUrl;
+	        File file = new File(path);
+	        if (!file.exists()) {
+	            return;
+	        }
+	        
+			Bitmap bitmap = BitmapFactory.decodeFile(path);
+	        Bitmap transBitmap = Constant.changeColor(bitmap);
+
+	        SGImageObject imageObject = new SGImageObject(transBitmap);
+
+	        SGMediaMessage msg = new SGMediaMessage();
+	        msg.mediaObject = imageObject;
+
+	        SendMessageToSG.Req req = new SendMessageToSG.Req();
+	        req.transaction = SGConstants.T_IMAGE;
+	        req.mediaMessage = msg;
+	        req.scene = SendMessageToSG.Req.SGSceneSession;
+
+	        appActivity.getXianLiaoShareApi().sendReq(req);
+		}
+	}
+	
+	public static void shareDingTalk(final String msgType, final String msgText, final String msgTitle, final String msgDescription, final String msgUrl, final String msgPreviewUrl) {
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgType:"+ msgType);
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgText:"+ msgText);
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgTitle:"+ msgTitle);
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgDescription:"+ msgDescription);
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgUrl:"+ msgUrl);
+		Log.d(Constant.LOG_TAG, "====shareDingTalk:msgPreviewUrl:"+ msgPreviewUrl);
+		
+		boolean isSendDing = false;
+		if(msgType.equals("shareText")) {
+			String text = msgText;
+			
+	        DDTextMessage textObject = new DDTextMessage();
+	        textObject.mText = text;
+
+	        DDMediaMessage mediaMessage = new DDMediaMessage();
+	        mediaMessage.mMediaObject = textObject;
+
+	        SendMessageToDD.Req req = new SendMessageToDD.Req();
+	        req.mMediaMessage = mediaMessage;
+
+	        if(isSendDing){
+	        	appActivity.getDingTalkShareApi().sendReqToDing(req);
+	        } else {
+	        	appActivity.getDingTalkShareApi().sendReq(req);
+	        }	
+		}else if(msgType.equals("shareUrl")){
+	        DDWebpageMessage webPageObject = new DDWebpageMessage();
+	        webPageObject.mUrl = msgUrl;
+
+	        DDMediaMessage webMessage = new DDMediaMessage();
+	        webMessage.mMediaObject = webPageObject;
+
+	        webMessage.mTitle = msgTitle;
+	        webMessage.mContent = msgDescription;
+	        webMessage.mThumbUrl = msgPreviewUrl;
+//	         webMessage.setThumbImage(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+
+	        //构造一个Req
+	        SendMessageToDD.Req webReq = new SendMessageToDD.Req();
+	        webReq.mMediaMessage = webMessage;
+
+	        if(isSendDing){
+	        	appActivity.getDingTalkShareApi().sendReqToDing(webReq);
+	        } else {
+
+	        	appActivity.getDingTalkShareApi().sendReq(webReq);
+	        }
+			
+		}else if(msgType.equals("shareWebImg")) {
+	        String picUrl = msgPreviewUrl;
+	        DDImageMessage imageObject = new DDImageMessage();
+	        imageObject.mImageUrl = picUrl;
+
+	        DDMediaMessage mediaMessage = new DDMediaMessage();
+	        mediaMessage.mMediaObject = imageObject;
+
+	        SendMessageToDD.Req req = new SendMessageToDD.Req();
+	        req.mMediaMessage = mediaMessage;
+
+	        if(isSendDing){
+	        	appActivity.getDingTalkShareApi().sendReqToDing(req);
+	        } else {
+
+	        	appActivity.getDingTalkShareApi().sendReq(req);
+	        }
+		}else if(msgType.equals("shareLocalImg")) {
+	        String path = msgPreviewUrl;
+	        File file = new File(path);
+	        if (!file.exists()) {
+	            return;
+	        }
+
+	        BitmapFactory.Options options = new BitmapFactory.Options();
+	        options.inPreferredConfig = Bitmap.Config.RGB_565;
+	        Bitmap bitmap = BitmapFactory.decodeFile(path, options);
+	        path = saveBitmap(bitmap);
+
+	        DDImageMessage imageObject = new DDImageMessage();
+	        imageObject.mImagePath = path;
+
+	        DDMediaMessage mediaMessage = new DDMediaMessage();
+	        mediaMessage.mMediaObject = imageObject;
+
+	        SendMessageToDD.Req req = new SendMessageToDD.Req();
+	        req.mMediaMessage = mediaMessage;
+
+	        if(isSendDing){
+	        	appActivity.getDingTalkShareApi().sendReqToDing(req);
+	        } else {
+
+	        	appActivity.getDingTalkShareApi().sendReq(req);
+	        }
+		}
+	}
+		
+	public static boolean openDingTalk() {
+        SendAuth.Req req = new SendAuth.Req();
+        req.scope = SendAuth.Req.SNS_LOGIN;
+        req.state = "glzp";
+        if(req.getSupportVersion() > appActivity.getDingTalkShareApi().getDDSupportAPI()){
+            return false;
+        }
+        appActivity.getDingTalkShareApi().sendReq(req);
+        return true;
+	}
+	
+	//是否支持分享到好友
+	public static boolean isDingTalkSupportAPI() {
+		boolean supportAPI = appActivity.getDingTalkShareApi().isDDSupportAPI();
+        return supportAPI;
+	}
+	
+	//是否支持分享到Ding
+	public static boolean isDingTalkSupportDingAPI() {
+		boolean supportDingAPI = appActivity.getDingTalkShareApi().isDDSupportDingAPI();
+        return supportDingAPI;
+	}
+	
+	//是否支持登录授权
+	public static boolean isDingTalkSupportLoginAPI() {
+		SendAuth.Req req = new SendAuth.Req();
+        boolean isSupportLogin = req.getSupportVersion() <= appActivity.getDingTalkShareApi().getDDSupportAPI();
+        return isSupportLogin;
+	}
+	
+	public static boolean isDingTalkInstalled() {
+		boolean isInstalled = appActivity.getDingTalkShareApi().isDDAppInstalled();
+        return isInstalled;
+	}
+	
+	public static String getVirtualBarHeightWrap() {
+		return "support";
+	}
+	
 	public static void getAppDetailSettingIntent(){
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        if(Build.VERSION.SDK_INT >= 9){
-//            intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
-//            intent.setData(Uri.fromParts("package", appActivity.getApplicationContext().getPackageName(), null));
-//        } else if(Build.VERSION.SDK_INT <= 8){
-//            intent.setAction(Intent.ACTION_VIEW);
-//            intent.setClassName("com.android.settings","com.android.settings.InstalledAppDetails");
-//            intent.putExtra("com.android.settings.ApplicationPkgName", appActivity.getApplicationContext().getPackageName());
-//        }
         appActivity.startCustomActivity(intent);
     }
 	
@@ -141,7 +524,7 @@ public class ExtensionApi {
     	return AppActivity.appVersion;
     }
     public static String getRoomId(){
-        Log.e(Constant.LOG_TAG, "====JSXXX====roomid:"+ AppActivity.roomid);
+        Log.i(Constant.LOG_TAG, "====JSXXX====roomid:"+ AppActivity.roomid);
         if(AppActivity.roomid != "")
         {
             String roomid = AppActivity.roomid;
@@ -150,7 +533,6 @@ public class ExtensionApi {
         }
         else
         {
-    		Log.i(Constant.LOG_TAG, "call getRoomId when open");
     		appActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -208,9 +590,21 @@ public class ExtensionApi {
 		final Bundle params = new Bundle();
 		if(!shareText.equals("")) {
 	        params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
-	        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareText);
-	        params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, sharePreviewUrl);
+	        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareTitle);
 	        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, appIconUrl);
+	        if(shareImage.equals("")) {
+	        	String[] splits = shareText.split("\n");
+        		String head = splits[0] + "\n" +  splits[1];
+        		String tail = "";
+        		for(int i = 2; i < splits.length; ++i) {
+        			tail += splits[i];
+        			if(i < splits.length - 1) {
+        				tail += "\n";
+        			}
+        		}
+	        	params.putString(QQShare.SHARE_TO_QQ_TITLE, head);
+	        	params.putString(QQShare.SHARE_TO_QQ_SUMMARY, tail);
+	        }
 		}
 		else if(!shareImage.equals("")) {
 			File fs = new File(shareImage);
@@ -364,13 +758,58 @@ public class ExtensionApi {
 		Intent intent = new Intent(Intent.ACTION_MAIN);
 		intent.addCategory(Intent.CATEGORY_LAUNCHER);
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		
 		ComponentName cmp = new ComponentName("com.tencent.mm","com.tencent.mm.ui.LauncherUI");
 		intent.setComponent(cmp);
         appActivity.startActivityForResult(intent, 0);
 	}
 	
-     
+	private static String getNavBarOverride() {
+	   String sNavBarOverride = null;
+	   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+	      try {
+	         Class c = Class.forName("android.os.SystemProperties");
+	         Method m = c.getDeclaredMethod("get", String.class);
+	         m.setAccessible(true);
+	         sNavBarOverride = (String) m.invoke(null, "qemu.hw.mainkeys");
+	      } catch (Throwable e) {
+	      }
+	   }
+	   return sNavBarOverride;
+	}
+	
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	public static boolean hasNavBar(Context context) {
+	   Resources res = context.getResources();
+	   int resourceId = res.getIdentifier("config_showNavigationBar", "bool", "android");
+	   if (resourceId != 0) {
+	      boolean hasNav = res.getBoolean(resourceId);
+	      // check override flag
+	      String sNavBarOverride = getNavBarOverride();
+	      if ("1".equals(sNavBarOverride)) {
+	         hasNav = false;
+	      } else if ("0".equals(sNavBarOverride)) {
+	         hasNav = true;
+	      }
+	      return hasNav;
+	   } else { // fallback
+	      return !ViewConfiguration.get(context).hasPermanentMenuKey();
+	   }
+	}
+
+	public static int getNavigationBarHeight() {
+	   int result = 0;
+	   if (hasNavBar(appActivity)) {
+	      Resources res = appActivity.getResources();
+	      int resourceId = res.getIdentifier("navigation_bar_height", "dimen", "android");
+	      if (resourceId > 0) {
+	         result = res.getDimensionPixelSize(resourceId);
+	      }
+	   }
+	   return result;
+	}
+
     /**
      * 
      * @return
@@ -419,7 +858,16 @@ public class ExtensionApi {
      */
     public static void voicePlay(String url) {
     	appActivity.voicePlay(url);
-    }    
+    }
+    
+    //stop voice playing
+    public static void stopAllVoice() {
+    	appActivity.stopAllVoice();
+    }
+    
+    public static int getVoiceDuration(String url) {
+    	return appActivity.getVoiceDuration(url);
+    }
     
     /**
      * 
@@ -479,7 +927,7 @@ public class ExtensionApi {
             }
         };
         appActivity.runOnUiThread(runnable);
-//    	ClipboardManager cm = (ClipboardManager) appActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+//    	  ClipboardManager cm = (ClipboardManager) appActivity.getSystemService(Context.CLIPBOARD_SERVICE);
 //        String copyText = (String) cm.getText();
 //        Log.i(Constant.LOG_TAG, "call getClipboardText, copyText = " + copyText);
 //        return copyText;
