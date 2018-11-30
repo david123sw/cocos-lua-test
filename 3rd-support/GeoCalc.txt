@@ -1,0 +1,68 @@
+function gt:getDistanceBetweenTwoPoints(geo1, geo2)
+    local HaverSin = function (theta)
+        local v = math.sin(theta / 2)
+        return v * v
+    end
+    
+    local ConvertDegree2Radian = function (degree)
+        return degree / 180.0 * math.pi
+    end
+
+    local ConvertRadian2Degree = function (radian)
+        return radian * 180.0 / math.pi
+    end
+
+    local earthRadius = 6378.137
+    local lat1 = ConvertDegree2Radian(geo1.y)
+    local lon1 = ConvertDegree2Radian(geo1.x)
+    local lat2 = ConvertDegree2Radian(geo2.y)
+    local lon2 = ConvertDegree2Radian(geo2.x)
+    local vLon = math.abs(lon1 - lon2)
+    local vLat = math.abs(lat1 - lat2)
+
+    local h = HaverSin(vLat) + math.cos(lat1) * math.cos(lat2) * HaverSin(vLon)
+    local distance = 2 * earthRadius * math.asin(math.sqrt(h))
+    return math.floor(distance * 1000)
+    
+--    local radLat1 = math.rad(geo1.y)
+--    local radLat2 = math.rad(geo2.y)
+--    local radLon1 = math.rad(geo1.x)
+--    local radLon2 = math.rad(geo2.x)
+
+--    if radLat1 < 0 then
+--        radLat1 = math.pi / 2 + math.abs(radLat1);
+--    end
+
+--    if radLat1 > 0 then
+--        radLat1 = math.pi / 2 - math.abs(radLat1);
+--    end
+
+--    if radLon1 < 0 then
+--        radLon1 = math.pi * 2 - math.abs(radLon1);
+--    end
+
+--    if radLat2 < 0 then
+--        radLat2 = math.pi / 2 + math.abs(radLat2);
+--    end
+
+--    if radLat2 > 0 then
+--        radLat2 = math.pi / 2 - math.abs(radLat2);
+--    end
+
+--    if radLon2 < 0 then
+--        radLon2 = math.pi * 2 - math.abs(radLon2);
+--    end
+
+--    local x1 = earthRadius * math.cos(radLon1) * math.sin(radLat1)
+--    local y1 = earthRadius * math.sin(radLon1) * math.sin(radLat1)
+--    local z1 = earthRadius * math.cos(radLat1)
+
+--    local x2 = earthRadius * math.cos(radLon2) * math.sin(radLat2)
+--    local y2 = earthRadius * math.sin(radLon2) * math.sin(radLat2)
+--    local z2 = earthRadius * math.cos(radLat2)
+
+--    local d = math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)+ (z1 - z2) * (z1 - z2));
+--    local theta = math.acos((earthRadius * earthRadius + earthRadius * earthRadius - d * d) / (2 * earthRadius * earthRadius))
+--    local dist = theta * earthRadius * 1000
+--    return math.floor(dist)
+end
