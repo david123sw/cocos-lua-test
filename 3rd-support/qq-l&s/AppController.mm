@@ -455,13 +455,24 @@ NSString* parseUrlFromStr(NSString *string)
     NSString *deviceUUID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
     NSString *deviceModel = [[UIDevice currentDevice] model];
     NSString *brandName = [AppController deviceBrandName];
+    CGRect rcScreen = [[UIScreen mainScreen] bounds];
+    CGSize szScreen = rcScreen.size;
+    CGFloat scrScale = [UIScreen mainScreen].scale;
+    NSString *scrWidth = [NSString stringWithFormat:@"%f", szScreen.width * scrScale];
+    NSString *scrHeight = [NSString stringWithFormat:@"%f", szScreen.height * scrScale];
+    NSUserDefaults* defs = [NSUserDefaults standardUserDefaults];
+    NSArray* languages = [defs objectForKey:@"AppleLanguages"];
+    NSString* preferredLang = [languages objectAtIndex:0];
+    NSLog(@"Language:%@", preferredLang);
     NSLog(@"deviceName %@", deviceName);
     NSLog(@"sysName %@", sysName);
     NSLog(@"sysVersion %@", sysVersion);
     NSLog(@"deviceUUID %@", deviceUUID);
     NSLog(@"deviceModel %@", deviceModel);
     NSLog(@"brandName %@", brandName);
-    NSString *info = [NSString stringWithFormat:@"{\"product\":\"%@\", \"brand\":\"%@\", \"manufacturer\":\"%@\", \"hardware\":\"%@\", \"model\":\"%@\", \"release\":\"%@\"}", deviceName, brandName, @"Apple", @"Apple", deviceModel, sysVersion];
+    NSLog(@"width %@", scrWidth);
+    NSLog(@"height %@", scrHeight);
+    NSString *info = [NSString stringWithFormat:@"{\"product\":\"%@\", \"brand\":\"%@\", \"manufacturer\":\"%@\", \"hardware\":\"%@\", \"model\":\"%@\", \"release\":\"%@\", \"width\":\"%@\", \"height\":\"%@\", \"language\":\"%@\"}", deviceName, brandName, @"Apple", @"Apple", deviceModel, sysVersion, scrWidth, scrHeight, preferredLang];
     return info;
 }
 

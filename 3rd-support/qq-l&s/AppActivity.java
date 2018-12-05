@@ -138,6 +138,7 @@ import com.android.dingtalk.share.ddsharemodule.plugin.SignatureCheck;
 import com.android.dingtalk.share.ddsharemodule.IDDAPIEventHandler;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 
 import org.xianliao.im.sdk.api.ISGAPI;
 import org.xianliao.im.sdk.api.SGAPIFactory;
@@ -222,7 +223,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		sdkVerNum = Build.VERSION.SDK_INT;
 		is8SDK = sdkVerNum >= 26;
 		
-        this.initOrientationChecker();
+        //this.initOrientationChecker();
         this.initDingTalkShareApi();
         this.initXianLiaoShareApi();
         this.initQQShareApi();
@@ -275,6 +276,12 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     	return iddShareApi;
     }
     
+	public Point getDevicePixelSize() {
+    	Point point = new Point();
+		getWindowManager().getDefaultDisplay().getRealSize(point);
+		return point;
+    }
+	
     public void initOrientationChecker() {
 		mOrientationListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL){
             @Override  

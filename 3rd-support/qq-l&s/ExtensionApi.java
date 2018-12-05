@@ -82,6 +82,7 @@ import com.android.dingtalk.share.ddsharemodule.message.SendMessageToDD;
 import com.android.dingtalk.share.ddsharemodule.plugin.SignatureCheck;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 
 import org.xianliao.im.sdk.api.ISGAPI;
 import org.xianliao.im.sdk.api.SGAPIFactory;
@@ -159,7 +160,28 @@ public class ExtensionApi {
 		appActivity.setRequestedOrientation(so);
 	}
 	
+	public static void openOrientationChecker() {
+		appActivity.initOrientationChecker();
+	}
+	
+	public static String getAllPhoneContacts() {
+		String num = ContactsContract.CommonDataKinds.Phone.NUMBER;
+		String name = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME;
+		Uri phoneUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+		ContentResolver cr = appActivity.getContentResolver();
+		Cursor cursor = cr.query(phoneUri,  new String[] {num, name}, null, null, null);
+		String allPhoneContacts = "";
+		while (cursor.moveToNext()){
+            String pName = cursor.getString(cursor.getColumnIndex(name));
+            String pPhone = cursor.getString(cursor.getColumnIndex(num));
+            allPhoneContacts += pName + "," + pPhone + ";";
+        }
+		return allPhoneContacts;
+	}
+	
 	public static String getDeviceInfo() {
+		Point point = appActivity.getDevicePixelSize();
+		String language = appActivity.getResources().getConfiguration().locale.getLanguage();
 		Log.d("PhoneInfo-----PRODUCT------>", Build.PRODUCT);
 		Log.d("PhoneInfo-----BRAND------>", Build.BRAND);
 		Log.d("PhoneInfo-----MANUFACTURER------>", Build.MANUFACTURER);
@@ -172,7 +194,13 @@ public class ExtensionApi {
 		info += "\"manufacturer\":\"" + Build.MANUFACTURER + "\",";
 		info += "\"hardware\":\"" + Build.HARDWARE + "\",";
 		info += "\"model\":\"" + Build.MODEL + "\",";
+		info += "\"width\":\"" + point.x + "\",";
+		info += "\"height\":\"" + point.y + "\",";
+		info += "\"language\":\"" + language + "\",";
 		info += "\"release\":\"" + Build.VERSION.RELEASE + "\"}";
+		Log.d("PhoneInfo-----widthPixels------>", "" + point.x);
+		Log.d("PhoneInfo-----heightPixels------>", "" + point.y);
+		Log.d("PhoneInfo-----language------>", language);
 		Log.d("PhoneInfo----------->", info);
 		return info;
 	}
