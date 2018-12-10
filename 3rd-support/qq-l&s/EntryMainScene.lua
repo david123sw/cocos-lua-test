@@ -287,6 +287,37 @@ function EntryMainScene:initDisplay()
     gt.addBtnPressedListener(self.disObjs.btnMatch, function (target, event)
         gt.log("click match")
         require("app/views/CommonTips"):create(gt.getLocationString("LTKey_0063"))
+		
+		local testUrl = "http://192.168.36.198:8080/img_compress.zip"
+		local fetchProgressListener = cc.EventListenerCustom:create("URL_FETCH_PROGRESS", function (params)
+		   local data = cjson.decode(params:getDataString())
+		   gt.dump(data, "------------>")            
+		   if data.url == testUrl then
+			   self.disObjs.txtNickname:setString(data.percent.."%")
+		   end
+	    end)
+		cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(fetchProgressListener, 1)
+
+	    if nil == self.subGamesDownloader then self.subGamesDownloader = cc.XMLHttpRequest:new() end
+	    self.subGamesDownloader.responseType = cc.XMLHTTPREQUEST_RESPONSE_BLOB
+	    self.subGamesDownloader.timeout = 30
+	    self.subGamesDownloader:setRequestHeader("progress", "true")
+	    self.subGamesDownloader:setRequestHeader("section", "1")
+	    self.subGamesDownloader:setRequestHeader("speed_limit", "10240")
+	    self.subGamesDownloader:setRequestHeader("download_size", "5491")
+	    self.subGamesDownloader:setRequestHeader("download_path", cc.FileUtils:getInstance():getWritablePath().."subDirs/")
+	    local function downloadResponse()
+		    if self.subGamesDownloader.readyState == 4 and (self.subGamesDownloader.status >= 200 and self.subGamesDownloader.status < 207) then
+			    self.receivedData = self.subGamesDownloader.response
+			    gt.log("content:"..(self.receivedData))
+		    elseif self.subGamesDownloader.readyState == 1 and self.subGamesDownloader.status == 0 then
+			    gt.log("resp failed, due to network failed")
+		    end
+		    self.subGamesDownloader:unregisterScriptHandler()
+	    end
+	    self.subGamesDownloader:open("GET", testUrl)
+	    self.subGamesDownloader:registerScriptHandler(downloadResponse)
+	    self.subGamesDownloader:send()
 
 --        local description = string.format("【%s】邀请你来玩最正宗的桂林字牌，赶紧来玩吧！", gt.playerData.nickname)
 --        local title = "吆玩桂林字牌"
