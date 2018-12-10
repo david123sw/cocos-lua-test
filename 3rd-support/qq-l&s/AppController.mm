@@ -79,6 +79,19 @@ NSString* parseUrlFromStr(NSString *string)
     return NULL;
 }
 
++(int)isAboveIphoneX
+{
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *pf = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+    if([pf containsString:@"iPhone10"]) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 +(int)isDeviceCharging
 {
     @try {

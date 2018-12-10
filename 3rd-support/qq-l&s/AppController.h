@@ -59,6 +59,7 @@
 +(void)deleteDeviceId:(NSString *)idKey;
 +(id)loadDeviceId:(NSString *)idKey;
 +(NSString*)deviceBrandName;
++(int)isAboveIphoneX;
 @property(nonatomic, readonly) RootViewController* viewController;
 @property(nonatomic, strong) TencentOAuth *tencentOauth;
 //@property(nonatomic, strong) AMapLocationManager *locationManager;//not used
