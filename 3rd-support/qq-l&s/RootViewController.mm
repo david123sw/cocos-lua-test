@@ -164,9 +164,10 @@ bool changeViewFrame = false;
             uname(&systemInfo);
             NSString *pf = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
             NSLog(@"pf:%@", pf);
-            if([pf containsString:@"iPhone10"]) {
-                CGRect s = CGRectMake(self.view.safeAreaInsets.left + 44,0,self.view.frame.size.width - 44,
-                                      self.view.frame.size.height);
+            if([pf containsString:@"iPhone10"] || [pf containsString:@"x86_64"]) {
+                int frameSizeWidth = self.view.frame.size.width;
+                int frameSizeHeight = self.view.frame.size.height;
+                CGRect s = CGRectMake(self.view.safeAreaInsets.left + 44,0,frameSizeWidth - 44,frameSizeHeight);
                 self.view.frame = s;
             }
         }
@@ -179,5 +180,9 @@ bool changeViewFrame = false;
     [super viewSafeAreaInsetsDidChange];
     NSLog(@"viewSafeAreaInsetsDidChange %@", NSStringFromUIEdgeInsets(self.view.safeAreaInsets));
     [self updateOrientation];
+    if( 0 == self.view.safeAreaInsets.left && 0 == self.view.safeAreaInsets.top && 21 == self.view.safeAreaInsets.bottom && 44 == self.view.safeAreaInsets.right)
+    {
+        changeViewFrame = true;
+    }
 }
 @end
