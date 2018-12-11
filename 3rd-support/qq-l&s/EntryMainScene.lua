@@ -297,6 +297,13 @@ function EntryMainScene:initDisplay()
 		   end
 	    end)
 		cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(fetchProgressListener, 1)
+		
+		if gt.isAndroidPlatform() then
+            gt.log("***isAndroid***")
+            cc.exports.httpProgressCallback = function(json)
+                gt.dump(json, "httpProgressCallback")
+            end
+        end
 
 	    if nil == self.subGamesDownloader then self.subGamesDownloader = cc.XMLHttpRequest:new() end
 	    self.subGamesDownloader.responseType = cc.XMLHTTPREQUEST_RESPONSE_BLOB
