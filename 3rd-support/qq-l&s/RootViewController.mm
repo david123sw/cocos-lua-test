@@ -29,6 +29,7 @@
 #import <DTShareKit/DTOpenKit.h>
 #import "XianliaoSDK_iOS/SugramApiManager.h"
 #import "AppController.h"
+#import <AVFoundation/AVFoundation.h>
 
 #import <sys/utsname.h>
 @implementation RootViewController
@@ -86,8 +87,14 @@
     [super viewWillAppear:animated];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    NSLog(@"viewDidAppear");
+}
+    
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
+    NSLog(@"viewDidDisappear");
 }
 
 
@@ -172,7 +179,7 @@ bool changeViewFrame = false;
             }
         }
     } else {
-        
+        //nothing
     }
 }
 

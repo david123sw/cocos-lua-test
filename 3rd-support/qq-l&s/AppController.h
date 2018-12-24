@@ -39,6 +39,7 @@
 +(NSString *) getRoomId;
 +(void) setRoomId:(NSString *)string;
 +(NSString *) getAppVersion;
++(NSString *) getClipboard;
 +(BOOL) copyToClipboard:(NSDictionary *)dict;
 +(void) jumpToGPS;
 +(NSString *) getGDLocation;

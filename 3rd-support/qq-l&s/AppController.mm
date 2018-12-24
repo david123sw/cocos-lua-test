@@ -41,6 +41,7 @@
 #include "scripting/lua-bindings/manual/CCLuaEngine.h"
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
+#import <AVFoundation/AVFoundation.h>
 
 //Add TalkingData support
 #include "TalkingData.h"
@@ -501,13 +502,19 @@ NSString* parseUrlFromStr(NSString *string)
     }
 }
 
++(NSString *) getClipboard
+{
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    return pasteboard.string;
+}
+
 +(NSString *) getRoomId{
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     if(0 < [pasteboard.string length])
     {
         NSLog(@"app has enter foreground:%@", pasteboard.string);
         [AppController setRoomId:parseUrlFromStr(pasteboard.string)];
-        pasteboard.string = @"";
+        //pasteboard.string = @"";
     }
     
     if(roomid != NULL){
@@ -1044,7 +1051,7 @@ NSString* parseUrlFromStr(NSString *string)
         NSLog(@"app has enter foreground:%@", pasteboard.string);
         //[AppController setRoomId:[self isUrlType:pasteboard.string]];
         [AppController setRoomId:parseUrlFromStr(pasteboard.string)];
-        pasteboard.string = @"";
+        //pasteboard.string = @"";
     }
 }
 
@@ -1112,19 +1119,17 @@ NSString* parseUrlFromStr(NSString *string)
         [data release];
         
     }else if([resp isKindOfClass:[PayResp class]]){
-        NSLog(@"come");
-        NSString * payErrCodestr = [NSString stringWithFormat:@"%d", resp.errCode];
+        NSLog(@"pay");
         NSMutableDictionary *data1;
         data1 = [[NSMutableDictionary alloc] init];
-        
         [data1 setValue:@"weixin_pay" forKey:@"type"];
         if(resp.errCode == 0){
             [data1 setValue:@"1" forKey:@"status"];
         }else{
             [data1 setValue:@"0" forKey:@"status"];
         }
-        [data1 setValue:@"-1" forKey:@"code"];
-        
+        NSMutableString *error  = [NSMutableString stringWithFormat:@"%d", resp.errCode];
+        [data1 setValue:error forKey:@"code"];
         [jstools sendToLuaByWxCode:[data1 JSONString]];
         NSLog(@"%@",@"ok");
         [data1 release];
