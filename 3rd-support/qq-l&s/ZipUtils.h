@@ -208,6 +208,7 @@ typedef struct unz_file_info_s unz_file_info;
         CC_DEPRECATED_ATTRIBUTE static void ccSetPvrEncryptionKey(unsigned int keyPart1, unsigned int keyPart2, unsigned int keyPart3, unsigned int keyPart4) { setPvrEncryptionKey(keyPart1, keyPart2, keyPart3, keyPart4); }
         static void setPvrEncryptionKey(unsigned int keyPart1, unsigned int keyPart2, unsigned int keyPart3, unsigned int keyPart4);
 
+		//可能有部分编译时需要添加CC_DEPRECATED_ATTRIBUTE
 		static bool unZipFile(const char* srcPath, const char *dstPath);
 
     private:
