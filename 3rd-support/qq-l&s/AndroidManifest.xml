@@ -86,6 +86,12 @@
             android:screenOrientation="landscape"
             android:theme="@style/wxActivityTheme">
         </activity>
+        
+        <activity
+            android:name=".wxapi.WXPayEntryActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent"
+            android:launchMode="singleTop" />
 
         <!-- meta-data 定义 -->
         <meta-data
