@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.sevenjzc.yyjddmj"
+      package="com.sevenjzc.hhllqp"
       android:versionCode="1"
       android:versionName="1.0.0"
       android:installLocation="auto">
@@ -29,7 +29,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />  
                 <category android:name="android.intent.category.BROWSABLE" />  
-                <data android:scheme="yyjddmj" android:host="yyjddmj.com" />
+                <data android:scheme="hhllqp" android:host="hhllqp.com" />
             </intent-filter>
         </activity>
         
@@ -40,7 +40,7 @@
            		<action android:name="android.intent.action.VIEW" />
            		<category android:name="android.intent.category.DEFAULT" />
            		<category android:name="android.intent.category.BROWSABLE" />
-           		<data android:scheme="tencent101489510" />
+           		<data android:scheme="tencent101542064" />
     		</intent-filter>
  		</activity>
  		
@@ -56,7 +56,7 @@
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:launchMode="singleInstance"
-            android:name="com.sevenjzc.yyjddmj.ddshare.DDShareActivity">
+            android:name="com.sevenjzc.hhllqp.ddshare.DDShareActivity">
             <intent-filter>  
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -64,7 +64,7 @@
         </activity>
         
         <!-- xl -->
-        <activity android:name="com.sevenjzc.yyjddmj.sgapi.SGEntryActivity"
+        <activity android:name="com.sevenjzc.hhllqp.sgapi.SGEntryActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <!--用于接收从闲聊邀请跳转进应用的roomId roomToken-->
@@ -74,7 +74,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <!--scheme = "paraches" 固定不能改变，host = "xianliao"+ 你申请的appId-->
                 <data android:scheme="paraches"
-                      android:host="xianliaon2hVIBuHhU14CJE4"/>
+                      android:host="xianliaoBZ6dpUzG0ULM0FG0"/>
             </intent-filter>
         </activity>
 
@@ -87,6 +87,17 @@
             android:theme="@style/wxActivityTheme">
         </activity>
         
+        <activity android:name=".apshare.ShareEntryActivity"
+        		  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:screenOrientation="portrait"
+                  android:exported="true"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        
         <activity
             android:name=".wxapi.WXPayEntryActivity"
             android:exported="true"
@@ -96,7 +107,7 @@
         <!-- meta-data 定义 -->
         <meta-data
             android:name="WX_APPID"
-            android:value="wx2495499fbde23a0a" />
+            android:value="wxc5358d127330b22c" />
         <!-- weixin sdk end -->
         <!-- alipay sdk begin -->
 
@@ -115,7 +126,7 @@
 		<!-- 高德sdk -->
 		<meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="3d98105902c035034972ffd0982fc7b5" />
+            android:value="d65e9576a9c1dba3253060d6b8b0d4a3" />
 		<service android:name="com.amap.api.location.APSService"></service>
 					
         <receiver android:name="org.game.PhoneStatReceiver" >

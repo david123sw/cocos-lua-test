@@ -31,8 +31,8 @@ import com.tencent.mm.sdk.openapi.WXAPIFactory;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
-import com.sevenjzc.ywglzp.qqapi.QQBaseUIListener;
-import com.sevenjzc.ywglzp.qqapi.QQShareActivity;
+import com.sevenjzc.hhllqp.qqapi.QQBaseUIListener;
+import com.sevenjzc.hhllqp.qqapi.QQShareActivity;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +47,7 @@ import android.widget.Toast;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.MediaStore.MediaColumns;
@@ -62,6 +63,7 @@ import android.database.Cursor;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -92,6 +94,16 @@ import org.xianliao.im.sdk.modelmsg.SGImageObject;
 import org.xianliao.im.sdk.modelmsg.SGMediaMessage;
 import org.xianliao.im.sdk.modelmsg.SGTextObject;
 import org.xianliao.im.sdk.modelmsg.SendMessageToSG;
+
+import com.alipay.share.sdk.openapi.APAPIFactory;
+import com.alipay.share.sdk.openapi.APImageObject;
+import com.alipay.share.sdk.openapi.APMediaMessage;
+import com.alipay.share.sdk.openapi.APTextObject;
+import com.alipay.share.sdk.openapi.APWebPageObject;
+import com.alipay.share.sdk.openapi.IAPApi;
+import com.alipay.share.sdk.openapi.SendMessageToZFB;
+
+import com.sevenjzc.hhllqp.R;
 /**
  * 
  * @author yangyi
@@ -182,12 +194,6 @@ public class ExtensionApi {
 	public static String getDeviceInfo() {
 		Point point = appActivity.getDevicePixelSize();
 		String language = appActivity.getResources().getConfiguration().locale.getLanguage();
-		Log.d("PhoneInfo-----PRODUCT------>", Build.PRODUCT);
-		Log.d("PhoneInfo-----BRAND------>", Build.BRAND);
-		Log.d("PhoneInfo-----MANUFACTURER------>", Build.MANUFACTURER);
-		Log.d("PhoneInfo-----HARDWARE------>", Build.HARDWARE);
-		Log.d("PhoneInfo-----MODEL------>", Build.MODEL);
-		Log.d("PhoneInfo-----Build.VERSION.RELEASE------>", Build.VERSION.RELEASE);
 		String info = "{";
 		info += "\"product\":\"" + Build.PRODUCT + "\",";
 		info += "\"brand\":\"" + Build.BRAND + "\",";
@@ -198,10 +204,6 @@ public class ExtensionApi {
 		info += "\"height\":\"" + point.y + "\",";
 		info += "\"language\":\"" + language + "\",";
 		info += "\"release\":\"" + Build.VERSION.RELEASE + "\"}";
-		Log.d("PhoneInfo-----widthPixels------>", "" + point.x);
-		Log.d("PhoneInfo-----heightPixels------>", "" + point.y);
-		Log.d("PhoneInfo-----language------>", language);
-		Log.d("PhoneInfo----------->", info);
 		return info;
 	}
 	
@@ -223,7 +225,6 @@ public class ExtensionApi {
 		return (ratio > 1.86 || isHD ) && Build.MANUFACTURER.equals("HUAWEI") && Build.BRAND.equals("HONOR");
 	}
 	
-	//是否已安装应用宝
 	public static boolean isQQDownloaderInstalled(final String packageName) {
 		final PackageManager packageManager = appActivity.getPackageManager();
 		List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
@@ -248,6 +249,19 @@ public class ExtensionApi {
 	public static boolean isXianLiaoInstalled() {
 		boolean isInstalled = appActivity.getXianLiaoShareApi().isSGAppInstalled();
         return isInstalled;
+	}
+	
+	public static boolean isZFBInstalled() {
+		final PackageManager packageManager = appActivity.getPackageManager();
+		List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+		List<String> pName = new ArrayList<String>();
+		if (pinfo != null) {
+			for (int i = 0; i < pinfo.size(); i++) {
+				String pn = pinfo.get(i).packageName;
+				pName.add(pn);
+			}
+		}
+		return pName.contains("com.eg.android.AlipayGphone");
 	}
 	
 	public static Bitmap getImageFromWeb(String url) {
@@ -280,12 +294,12 @@ public class ExtensionApi {
         File filePic;
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
-            savePath = "/sdcard/glzpTmp/";
+            savePath = "/sdcard/yyjddmjTmp/";
         } else {
-            savePath = appActivity.getApplicationContext().getFilesDir().getAbsolutePath() + "/glzpTmp/";
+            savePath = appActivity.getApplicationContext().getFilesDir().getAbsolutePath() + "/yyjddmjTmp/";
         }
         try {
-            filePic = new File(savePath + "glzpTmpCapture" + ".jpg");
+            filePic = new File(savePath + "yyjddmjTmpCapture" + ".jpg");
             if (!filePic.exists()) {
                 filePic.getParentFile().mkdirs();
                 filePic.createNewFile();
@@ -302,6 +316,80 @@ public class ExtensionApi {
         return filePic.getAbsolutePath();
     }
 	
+    public static String buildTransaction(final String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
+    }
+    
+    public static void shareZFB(final String msgType, final String msgText, final String msgTitle, final String msgDescription, final String msgUrl, final String msgPreviewUrl) {
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgType:"+ msgType);
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgText:"+ msgText);
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgTitle:"+ msgTitle);
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgDescription:"+ msgDescription);
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgUrl:"+ msgUrl);
+		Log.d(Constant.LOG_TAG, "====shareZFB:msgPreviewUrl:"+ msgPreviewUrl);
+        
+		if(msgType.equals("shareText")) {
+            String text = msgText;
+
+            APTextObject textObject = new APTextObject();
+            textObject.text = text;
+
+            APMediaMessage mediaMessage = new APMediaMessage();
+            mediaMessage.mediaObject = textObject;
+
+            SendMessageToZFB.Req req = new SendMessageToZFB.Req();
+            req.message = mediaMessage;
+
+	        appActivity.getZFBShareApi().sendReq(req);
+		}else if(msgType.equals("shareUrl")){
+            APWebPageObject webPageObject = new APWebPageObject();
+            webPageObject.webpageUrl = msgUrl;
+            APMediaMessage webMessage = new APMediaMessage();
+            webMessage.title = msgTitle;
+            webMessage.description = msgDescription;
+            webMessage.mediaObject = webPageObject;
+            webMessage.thumbUrl = msgPreviewUrl;
+            SendMessageToZFB.Req webReq = new SendMessageToZFB.Req();
+            webReq.message = webMessage;
+            webReq.transaction = buildTransaction("webpage");
+
+            if (!appActivity.isAlipayIgnoreChannel()) {
+                webReq.scene = true
+                        ? SendMessageToZFB.Req.ZFBSceneTimeLine
+                        : SendMessageToZFB.Req.ZFBSceneSession;
+            }
+
+	        appActivity.getZFBShareApi().sendReq(webReq);
+		}else if(msgType.equals("shareWebImg")) {
+            APImageObject imageObject = new APImageObject();
+            imageObject.imageUrl = msgPreviewUrl;
+            APMediaMessage mediaMessage = new APMediaMessage();
+            mediaMessage.mediaObject = imageObject;
+            SendMessageToZFB.Req req = new SendMessageToZFB.Req();
+            req.message = mediaMessage;
+            req.transaction = buildTransaction("image");
+
+	        appActivity.getZFBShareApi().sendReq(req);
+		}else if(msgType.equals("shareLocalImg")) {
+	        String path = msgPreviewUrl;
+	        File file = new File(path);
+	        if (!file.exists()) {
+	            return;
+	        }
+	        
+	        Bitmap bmp = BitmapFactory.decodeFile(path);
+	        APImageObject imageObject = new APImageObject(bmp);
+	        APMediaMessage mediaMessage = new APMediaMessage();
+	        mediaMessage.mediaObject = imageObject;
+	        SendMessageToZFB.Req req = new SendMessageToZFB.Req();
+	        req.message = mediaMessage;
+	        req.transaction = buildTransaction("image");
+	        bmp.recycle();
+	        
+	        appActivity.getZFBShareApi().sendReq(req);
+		}
+	}
+    
 	public static void shareXianLiao(final String msgType, final String msgText, final String msgTitle, final String msgDescription, final String msgUrl, final String msgPreviewUrl) {
 		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgType:"+ msgType);
 		Log.d(Constant.LOG_TAG, "====shareXianLiao:msgText:"+ msgText);
@@ -318,7 +406,7 @@ public class ExtensionApi {
 
 	        SGMediaMessage msg = new SGMediaMessage();
 	        msg.mediaObject = textObject;
-//	        msg.title = msgTitle;//这个目前不要使用
+//	        msg.title = msgTitle;
 
 	        SendMessageToSG.Req req = new SendMessageToSG.Req();
 	        req.transaction = SGConstants.T_TEXT;
@@ -346,9 +434,8 @@ public class ExtensionApi {
 	        gameObject.roomId = beforeAnd;
 	        gameObject.roomToken = afterAnd;
 
-	        //可以自定义邀请应用的下载链接，也可以不填，不填会默认使用应用申请appid时填写的链接
-	        gameObject.androidDownloadUrl = "https://fir.im/ywglzp1";
-	        gameObject.iOSDownloadUrl = "https://fir.im/ywglzp2";
+	        gameObject.androidDownloadUrl = "https://fir.im/hhlnqp01";
+	        gameObject.iOSDownloadUrl = "https://fir.im/hhlnqp02";
 
 	        SGMediaMessage msg = new SGMediaMessage();
 	        msg.mediaObject = gameObject;
@@ -438,7 +525,6 @@ public class ExtensionApi {
 	        webMessage.mThumbUrl = msgPreviewUrl;
 //	         webMessage.setThumbImage(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
 
-	        //构造一个Req
 	        SendMessageToDD.Req webReq = new SendMessageToDD.Req();
 	        webReq.mMediaMessage = webMessage;
 
@@ -499,7 +585,7 @@ public class ExtensionApi {
 	public static boolean openDingTalk() {
         SendAuth.Req req = new SendAuth.Req();
         req.scope = SendAuth.Req.SNS_LOGIN;
-        req.state = "glzp";
+        req.state = "hhllqp";
         if(req.getSupportVersion() > appActivity.getDingTalkShareApi().getDDSupportAPI()){
             return false;
         }
@@ -507,19 +593,16 @@ public class ExtensionApi {
         return true;
 	}
 	
-	//是否支持分享到好友
 	public static boolean isDingTalkSupportAPI() {
 		boolean supportAPI = appActivity.getDingTalkShareApi().isDDSupportAPI();
         return supportAPI;
 	}
 	
-	//是否支持分享到Ding
 	public static boolean isDingTalkSupportDingAPI() {
 		boolean supportDingAPI = appActivity.getDingTalkShareApi().isDDSupportDingAPI();
         return supportDingAPI;
 	}
 	
-	//是否支持登录授权
 	public static boolean isDingTalkSupportLoginAPI() {
 		SendAuth.Req req = new SendAuth.Req();
         boolean isSupportLogin = req.getSupportVersion() <= appActivity.getDingTalkShareApi().getDDSupportAPI();
@@ -551,8 +634,13 @@ public class ExtensionApi {
     public static String getAppVersion(){
     	return AppActivity.appVersion;
     }
+    
+    public static String getClipboardTextEx() {
+    	return appActivity.checkSystemClipboardEx();
+    }
+    
     public static String getRoomId(){
-        Log.i(Constant.LOG_TAG, "====JSXXX====roomid:"+ AppActivity.roomid);
+        //Log.i(Constant.LOG_TAG, "====JSXXX====roomid:"+ AppActivity.roomid);
         if(AppActivity.roomid != "")
         {
             String roomid = AppActivity.roomid;
@@ -662,10 +750,36 @@ public class ExtensionApi {
 			}
 		}
 		else if(!shareUrl.equals("")) {
+			Resources resources = appActivity.getResources();
+			String path = ContentResolver.SCHEME_ANDROID_RESOURCE + "://"
+	                + resources.getResourcePackageName(R.drawable.icon) + "/"
+	                + resources.getResourceTypeName(R.drawable.icon) + "/"
+	                + resources.getResourceEntryName(R.drawable.icon);
+			File fs = new File(path);
+			String imgPath = "";
+			if(fs.exists()) {
+				Log.i("QQ_SHARE", "shareUrlImage exist " + fs.length() + " name " + fs.getName());
+				appActivity.requestWritePermission();
+				try {
+					String imgUrl = MediaStore.Images.Media.insertImage(appActivity.getContentResolver(), path, fs.getName(), null);
+					Uri imgUri = Uri.parse(imgUrl);
+					String[] imgPathCol = {MediaColumns.DATA};
+					Cursor cursor = appActivity.getContentResolver().query(imgUri, imgPathCol, null, null, null);
+					cursor.moveToFirst();
+					int colIndex = cursor.getColumnIndex(imgPathCol[0]);
+					imgPath = cursor.getString(colIndex);
+					cursor.close();
+				}catch(FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else {
+				Log.i("QQ_SHARE", "shareUrlImage not exist ");
+			}
 			params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
 	        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareTitle);
 	        params.putString(QQShare.SHARE_TO_QQ_SUMMARY, shareDescription);
-	        params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, sharePreviewUrl);
+	        //params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, sharePreviewUrl);
+	        params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, imgPath);
 	        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, shareUrl);
 		}
         AppActivity.mTencent.shareToQQ(appActivity, params, qqShareListener);
@@ -926,7 +1040,6 @@ public class ExtensionApi {
      * @return 
      */
     public static void GetLocation() {
-    	Log.e("enter getlocation", "test");
     	appActivity.getLocation();
     }
     
@@ -955,10 +1068,6 @@ public class ExtensionApi {
             }
         };
         appActivity.runOnUiThread(runnable);
-//    	  ClipboardManager cm = (ClipboardManager) appActivity.getSystemService(Context.CLIPBOARD_SERVICE);
-//        String copyText = (String) cm.getText();
-//        Log.i(Constant.LOG_TAG, "call getClipboardText, copyText = " + copyText);
-//        return copyText;
     }
     
 	public static void copyImageToGallery(final String srcFilePath) {

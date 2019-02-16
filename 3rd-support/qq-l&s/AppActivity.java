@@ -118,10 +118,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.sevenjzc.ywglzp.ddshare.DDShareActivity;
-import com.sevenjzc.ywglzp.qqapi.QQBaseUIListener;
-import com.sevenjzc.ywglzp.qqapi.QQUtil;
-import com.sevenjzc.ywglzp.qqapi.QQShareActivity;
+import com.sevenjzc.hhllqp.ddshare.DDShareActivity;
+import com.sevenjzc.hhllqp.qqapi.QQBaseUIListener;
+import com.sevenjzc.hhllqp.qqapi.QQUtil;
+import com.sevenjzc.hhllqp.qqapi.QQShareActivity;
 import com.android.dingtalk.share.ddsharemodule.DDShareApiFactory;
 import com.android.dingtalk.share.ddsharemodule.IDDShareApi;
 import com.android.dingtalk.share.ddsharemodule.ShareConstant;
@@ -147,6 +147,14 @@ import org.xianliao.im.sdk.modelmsg.SGGameObject;
 import org.xianliao.im.sdk.modelmsg.SGMediaMessage;
 import org.xianliao.im.sdk.modelmsg.SendMessageToSG;
 
+import com.alipay.share.sdk.openapi.APAPIFactory;
+import com.alipay.share.sdk.openapi.APImageObject;
+import com.alipay.share.sdk.openapi.APMediaMessage;
+import com.alipay.share.sdk.openapi.APTextObject;
+import com.alipay.share.sdk.openapi.APWebPageObject;
+import com.alipay.share.sdk.openapi.IAPApi;
+import com.alipay.share.sdk.openapi.SendMessageToZFB;
+
 public class AppActivity extends Cocos2dxActivity implements MessageEventListener{
 	public static GL10 gl10;
 	private int intLevel; 
@@ -164,7 +172,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 	public MediaRecorder audioMR = null;
 	public long mpBeginTm = 0;
 	public long mpEndTm = 0;
-	public String audioPrepath =Environment.getExternalStorageDirectory().toString() + "/amr_";
+	public String audioPrepath = Environment.getExternalStorageDirectory().toString() + "/amr_";
 	public int sdkVerNum = 0;
 	public boolean is8SDK = false;
 	
@@ -180,11 +188,12 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     private DDShareActivity iddContainer = null;
     private IDDAPIEventHandler iddAPIEventHandler = null;
     private PowerConnectionReceiver pcr = null;
+    private IAPApi zFBApi = null;
     
     ISGAPI xLApi;
     String xLRoomToken;
     String xLRoomId;
-	
+    
     private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
         @Override 
         public void onReceive(Context context, Intent intent) { 
@@ -223,12 +232,14 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		sdkVerNum = Build.VERSION.SDK_INT;
 		is8SDK = sdkVerNum >= 26;
 		
-        //this.initOrientationChecker();
+		this.initZFBShareApi();
         this.initDingTalkShareApi();
         this.initXianLiaoShareApi();
         this.initQQShareApi();
         this.initBatteryChargingChecker();
-        Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
+        
+        //this.getGLSurfaceView().setMultipleTouchEnabled(false);
+        Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
     }
 
     public void setRequestedOrientation(final String so) {
@@ -272,16 +283,30 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		}
     }
     
+    public void initZFBShareApi() {
+		if(null == zFBApi) {
+			zFBApi = APAPIFactory.createZFBApi(this, Constant.APP_ZFB_KEY, false);
+		}
+    }
+    
+    public IAPApi getZFBShareApi() {
+    	return zFBApi;
+    }
+    
+    public boolean isAlipayIgnoreChannel() {
+        return zFBApi.getZFBVersionCode() >= 101;
+    }
+    
     public IDDShareApi getDingTalkShareApi() {		
     	return iddShareApi;
     }
     
-	public Point getDevicePixelSize() {
+    public Point getDevicePixelSize() {
     	Point point = new Point();
 		getWindowManager().getDefaultDisplay().getRealSize(point);
 		return point;
     }
-	
+    
     public void initOrientationChecker() {
 		mOrientationListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL){
             @Override  
@@ -290,7 +315,6 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
             	   Log.d("OrientationEventListener", "Unknown");
             	   return;
                }
-//               Log.d("OrientationEventListener", "" + orientation);
                if (orientation > 350 || orientation < 10) {
             	   orientation = 0;
 	           } else if (orientation > 80 && orientation < 100) {
@@ -601,7 +625,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     @Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onNewIntent");
+		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onNewIntent");
 		setIntent(intent);
 		if(getIntent() != null){
 			getURLParame();
@@ -642,6 +666,16 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 	    }
 	}
 
+	public String checkSystemClipboardEx() {
+		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+		String paste = "";
+		if(null != cbm.getText())
+		{
+			paste = cbm.getText().toString();
+		}
+		return paste;
+	}
+	
 	public void checkSystemClipboard() {
 		ClipboardManager cbm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
 		if(null != cbm.getText())
@@ -735,7 +769,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		super.onResume();
 		TalkingDataGA.onResume(this);
 		
-		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onResume");
+		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onResume");
 	}
 
 	@Override
@@ -744,14 +778,14 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		super.onPause();
 		TalkingDataGA.onPause(this);
 		
-		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onPause");
+		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onPause");
 	}
 
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		super.onDestroy();  
-		Log.d("ywglzp>>>>>>>>>>>>>>>>>>>>>>>>>", "onDestroy");
+		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onDestroy");
 		keepScreenOn(this, false);  
 		
 		if(true == isYvSDKInitSuccess) {
@@ -1052,14 +1086,14 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         String copyText = "";
         if(cm.hasText()) {
         	copyText = cm.getText().toString();
-        	if(copyText.indexOf("å†ç©") != -1) {
-        		String pattern = "æˆ¿å·\\\\s+|\\\\S+ã€\\\\d+ã€‘";
+        	if(copyText.indexOf("»ğ»ğÁÉÄşÆåÅÆ") != -1) {
+        		String pattern = "·¿ºÅ\\\\s+|\\\\S+¡¾\\\\d+¡¿";
         		Pattern r = Pattern.compile(pattern);
         		Matcher m = r.matcher(copyText);
         		if (m.find()) {
         			copyText = m.group(0);
         		}else {
-        			pattern = "å›æ”¾ç :\\\\s+|\\\\S+\\\\d+";
+        			pattern = "»Ø·ÅÂë:\\\\s+|\\\\S+\\\\d+";
         			r = Pattern.compile(pattern);
         			m = r.matcher(copyText);
         			if (m.find()) {
