@@ -44,6 +44,8 @@
 @synthesize statusString = statusString;
 @synthesize responseError = responseError;
 @synthesize connError = connError;
+@synthesize connData = connData;
+@synthesize connDataSize = connDataSize;
 @synthesize conn = conn;
 @synthesize finish = finish;
 @synthesize runLoop = runLoop;
@@ -58,6 +60,7 @@
     [conn release];
     [runLoop release];
     [connError release];
+    [connData release];
     
     [super dealloc];
 }
@@ -72,9 +75,11 @@
 
     self.responseData = [NSMutableData data];
     getDataTime = 0;
+    connDataSize = 0;
 
     self.responseError = nil;
     self.connError = nil;
+    self.connData = nil;
     
     // create the connection with the target request and this class as the delegate
     self.conn = [[[NSURLConnection alloc] initWithRequest:request
@@ -108,6 +113,7 @@
     self.statusString = [NSHTTPURLResponse localizedStringForStatusCode:responseCode];
     if(responseCode == 200)
         self.statusString = @"OK";
+        connDataSize = 0;
  
     /*The individual values of the numeric status codes defined for HTTP/1.1
     | "200"  ; OK
@@ -120,6 +126,7 @@
     */
     if (responseCode < 200 || responseCode >= 300)
     {// something went wrong, abort the whole thing
+        connDataSize = 0;
         self.responseError = [NSError errorWithDomain:@"CCBackendDomain"
                                             code:responseCode
                                         userInfo:@{NSLocalizedDescriptionKey: @"Bad HTTP Response Code"}];        
@@ -135,9 +142,11 @@
 - (void)connection:(NSURLConnection *)connection 
     didReceiveData:(NSData *)data
 {
-    //NSLog(@"get some data");
     [responseData appendData:data];
     //NSLog(@"get some data:%ld", [responseData length]);
+    self.connData = data;
+    connDataSize += [data length];
+    
     getDataTime++;
 }
 
@@ -161,6 +170,8 @@
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
     finish = true;
+    NSLog(@"get some data finished url:%@", srcURL);
+    NSLog(@"get some data finished:%ld", connDataSize);
 }
 
 //Server evaluates client's certificate

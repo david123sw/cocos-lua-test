@@ -56,7 +56,7 @@ static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
     // add data to the end of recvBuffer
     // write data maybe called more than once in a single request
     recvBuffer->insert(recvBuffer->end(), (char*)ptr, (char*)ptr+sizes);
-
+				
 	if (nullptr != _httpClient)
 	{
 		long downloadedSize = _httpClient->getDownloadingFileSizeCount();
@@ -64,7 +64,7 @@ static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
 		_httpClient->setDownloadingFileSizeCount(downloadedSize);
 		long totalSize = _httpClient->getFileSizeCount();
 		double sizeRatio = 0 == totalSize ? 0.0f : (downloadedSize * 1.0) / totalSize;
-		int perRatio = ceil(sizeRatio * 100);
+		int perRatio = floor(sizeRatio * 100);
 		bool progressFlag = _httpClient->getProgressEnabledFlag();
 		std::string fetchUrl = _httpClient->getFileFetchUrl();
 		std::string fetchSize = _httpClient->calcUniformCapacity(totalSize * 1.0f);
@@ -76,8 +76,8 @@ static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
 				std::string fFetchUrl = _httpClient->getFileFetchUrl();
 				std::string fName = fFetchUrl.substr(fFetchUrl.find_last_of("/") + 1);
 				std::string fSavePath = fPath + fName;
-				//CCLOG("download file url is:%s", fFetchUrl.c_str());
-				//CCLOG("download file path is:%s", fSavePath.c_str());
+				// CCLOG("download file url is:%s", fFetchUrl.c_str());
+				// CCLOG("download file path is:%s", fSavePath.c_str());
 				ApplicationProtocol::Platform target = Application::getInstance()->getTargetPlatform();
 				if (target == ApplicationProtocol::Platform::OS_WINDOWS)
 				{
@@ -94,7 +94,9 @@ static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
 			}
 
 			Scheduler *scheduler = Director::getInstance()->getScheduler();
-			if (nullptr != scheduler && perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)))
+			//CCLOG("download perRatio is:%d", perRatio);
+			//CCLOG("download _prevPerRatioMarked is:%d", _httpClient->_prevPerRatioMarked);
+			if (nullptr != scheduler && (perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)) || 100 == perRatio))
 			{
 				scheduler->performFunctionInCocosThread([fetchUrl, perRatio, fetchSize]{
 					EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
@@ -105,6 +107,12 @@ static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
 					dispatcher->dispatchCustomEvent("URL_FETCH_PROGRESS", (void*)(data.c_str()));
 				});
 				_httpClient->_prevPerRatioMarked = perRatio;
+				if (100 == perRatio)
+				{
+					_httpClient->_fileDownloadingSizeCount = 0;
+					_httpClient->_fileSizeCount = 0;
+					_httpClient->_prevPerRatioMarked = 0;
+				}
 			}
 		}
 	}
@@ -214,28 +222,29 @@ void HttpClient::networkThreadAlone(HttpRequest* request, HttpResponse* response
 
 				if (downloadPathSet)
 				{
-					std::vector<char> success = { 'o', 'k', ':' };
+					std::vector<char> success = {};
 					std::string targetZipFile = _httpClient->_curSectionDownloadPath;
+					std::string targetFileUrl = _httpClient->getFileFetchUrl();
 					if (std::string::npos != targetZipFile.find(".zip"))
 					{
 						bool isGzip = ZipUtils::unZipFile(targetZipFile.c_str(), _httpClient->getDownloadPath().c_str());
 						if (!isGzip)
 						{
-							success = { 'n', 'o', 'k', ':' };
+							success = { 'f', 'a', 'i', 'l', 'u', 'r', 'e'};
 						}
 						else
 						{
-							FileUtils::getInstance()->removeFile(targetZipFile.c_str());
+							for (int i = 0; i < targetFileUrl.size(); ++i)
+							{
+								success.push_back(targetFileUrl[i]);
+							}
 						}
+						FileUtils::getInstance()->removeFile(targetZipFile.c_str());
 					}
 
 					_curSectionCount += 1;
-					std::string strSection = std::to_string(_curSectionCount);
+					// std::string strSection = std::to_string(_curSectionCount);
 					
-					for (int i = 0; i < strSection.size(); ++i)
-					{
-						success.push_back(strSection[i]);
-					}
 					response->setResponseData(&success);
 					callback(this, response);
 				}
@@ -380,7 +389,7 @@ public:
 		std::vector<std::string> headers = request->getHeaders();
 		if (!headers.empty())
 		{
-			int findPos = std::string::npos;
+			std::size_t findPos = std::string::npos;
 			for (auto& header : headers)
 			{
 				if (std::string::npos != (findPos = header.find("download_path")))
@@ -427,7 +436,6 @@ public:
 							curl_easy_cleanup(handler);
 						}
 						curl_easy_getinfo(handler, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &retCode3);
-						//CCLOG("current downloading file size:%.2f Bytes.\n", retCode3);
 						client->setFileSizeCount(long(retCode3));
 						client->setDownloadingFileSizeCount(0);
 						curl_easy_cleanup(handler);
@@ -748,7 +756,7 @@ bool HttpClient::lazyInitThreadSemaphore()
 
 //Add a get task to queue
 void HttpClient::send(HttpRequest* request)
-{
+{	
     if (false == lazyInitThreadSemaphore())
     {
         return;
@@ -758,16 +766,15 @@ void HttpClient::send(HttpRequest* request)
     {
         return;
     }
-    
+	
+    request->retain();
 	_fileSizeCount = 0;
 	_fileDownloadingSizeCount = 0;
 	_curSectionCount = 0;
 	_curSectionDownloadPath = "";
 	_prevPerRatioMarked = 0;
 	_downloadSpeedLimit = 0;
-
-    request->retain();
-
+	
     _requestQueueMutex.lock();
     _requestQueue.pushBack(request);
     _requestQueueMutex.unlock();

@@ -47,31 +47,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
-import java.util.HashMap;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+import java.util.Random;
 import org.cocos2dx.lib.Cocos2dxLuaJavaBridge;
+import org.cocos2dx.lib.Cocos2dxHelper;
 
 public class Cocos2dxHttpURLConnection
 {
     private static final String POST_METHOD = "POST" ;
     private static final String PUT_METHOD = "PUT" ;
 
-    public static String FETCH_URL = "";
-    public static Map<String, String> URL_AND_SIZE = new HashMap<String, String>();
-
-    //hacked from one param to two
-    static HttpURLConnection createHttpURLConnection(String linkURL, String linkFileSize) {
+    static HttpURLConnection createHttpURLConnection(String linkURL) {
         URL url;
         HttpURLConnection urlConnection;
-        FETCH_URL = linkURL;
-
-        Log.d("createHttpURLConnection---linkURL", linkURL);
-        Log.d("createHttpURLConnection---linkFileSize", linkFileSize);
-        Log.d("createHttpURLConnection---test-map-size", URL_AND_SIZE.size() + "");
         try {
             url = new URL(linkURL);
             urlConnection = (HttpURLConnection) url.openConnection();
@@ -158,6 +150,7 @@ public class Cocos2dxHttpURLConnection
         try {
             http.connect();
         } catch (IOException e) {
+            Log.e("cocos2d-x debug info", "come in connect");
             Log.e("cocos2d-x debug info", e.toString());
             suc = 1;
         }
@@ -275,7 +268,7 @@ public class Cocos2dxHttpURLConnection
                 else if(contentEncoding.equalsIgnoreCase("deflate")){
                     in = new InflaterInputStream(http.getInputStream());
                 }
-            }       
+            }
         } catch (IOException e) {
             in = http.getErrorStream();
         } catch (Exception e) {
@@ -284,36 +277,35 @@ public class Cocos2dxHttpURLConnection
         }
 
         try {
-            long totalSize = http.getContentLength();
-            long downloadingSize = 0;
-            int prevPerInt = 0;
-            Log.d("createHttpURLConnection---connected---size", totalSize + "");
-            String url = http.getURL().toString();
-            Log.d("createHttpURLConnection---connected---url", url);
-
+			long totalSize = http.getContentLength();
+			String targetURL = http.getURL().toString();
+			long readingSize = 0;
+			long prevReadingPercent = 0;
+			boolean needProgress = -1 < targetURL.indexOf(".zip");
+			
             byte[] buffer = new byte[1024];
             int size   = 0;
             ByteArrayOutputStream bytestream = new ByteArrayOutputStream();
             while((size = in.read(buffer, 0 , 1024)) != -1)
             {
                 bytestream.write(buffer, 0, size);
-                downloadingSize += size;
-                Log.d("createHttpURLConnection---connected---downloading-size", size + "");
-                double perDouble = downloadingSize * 1.0 / totalSize * 100;
-                Log.d("createHttpURLConnection---connected---perDouble", perDouble + "");
-                int perInt = (int)(Math.round(perDouble));
-                Log.d("createHttpURLConnection---connected---perInt", perInt + "");
-                Log.d("createHttpURLConnection---connected---prevPerInt", prevPerInt + "");
-                if (perInt - prevPerInt >= 1)
-                {
-                    Log.d("createHttpURLConnection---connected---Cocos2dxLuaJavaBridge", "");
-                    String data = "{\"url\":\"";
-                    data += url + "\",\"percent\":\"";
-                    data += perInt + "\",\"size\":\"";
-                    data += totalSize + "\"}";
-                    Cocos2dxLuaJavaBridge.callLuaGlobalFunctionWithString("httpProgressCallback", data);
-                }
-                prevPerInt = perInt;
+				
+				if(needProgress)
+				{
+					readingSize += size;
+					int percent = (int)(readingSize * 1.0 / totalSize * 100);
+					long gap = (int)(Math.random() * 4) + 2;
+					if(percent - prevReadingPercent > gap || readingSize == totalSize) {
+						final String jsonStr = "{\"type\":\"" + "URL_FETCH_PROGRESS" + "\", \"percent\":" + String.format("%d", percent) +", \"size\":\""+ calcUniformCapacity(totalSize*1.0) + "\", \"url\":\""+ targetURL + "\"}";
+						Cocos2dxHelper.runOnGLThread(new Runnable() {
+							@Override
+							public void run() {
+								Cocos2dxLuaJavaBridge.callLuaGlobalFunctionWithString("extension_callback", jsonStr);
+							}
+						});
+						prevReadingPercent = percent;
+					}	
+				}
             }
             byte retbuffer[] = bytestream.toByteArray();
             bytestream.close();
@@ -325,6 +317,28 @@ public class Cocos2dxHttpURLConnection
         return null;
     }
     
+	static String calcUniformCapacity(double size) {
+		String unit = "";
+		double tsize = 0;
+		if (size > 1024 * 1024 * 1024)
+		{
+			unit = "G";
+			size /= 1024 * 1024 * 1024;
+		}
+		else if (size > 1024 * 1024)
+		{
+			unit = "M";
+			size /= 1024 * 1024;
+		}
+		else if (size > 1024)
+		{
+			unit = "KB";
+			size /= 1024;
+		}
+		String res = "" + String.format("%.1f", size) + unit;
+		return res;
+	}
+	
     static int getResponseCode(HttpURLConnection http) {
         int code = 0;
         try {

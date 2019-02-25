@@ -127,30 +127,35 @@ void HttpClient::networkThreadAlone(HttpRequest* request, HttpResponse* response
 
 				if (downloadPathSet)
 				{
-					std::vector<char> success = { 'o', 'k', ':' };
+					std::vector<char> success = {};
 					std::string targetZipFile = _httpClient->_curSectionDownloadPath;
+                    std::string targetFileUrl = _httpClient->getFileFetchUrl();
 					if (std::string::npos != targetZipFile.find(".zip"))
 					{
 						bool isGzip = ZipUtils::unZipFile(targetZipFile.c_str(), _httpClient->getDownloadPath().c_str());
 						if (!isGzip)
 						{
-							success = { 'n', 'o', 'k', ':' };
+							callback(this, response);
 						}
-						else
-						{
-							FileUtils::getInstance()->removeFile(targetZipFile.c_str());
-						}
-					}
+                        else
+                        {
+                            for (int i = 0; i < targetFileUrl.size(); ++i)
+                            {
+                                success.push_back(targetFileUrl[i]);
+                            }
+                            FileUtils::getInstance()->removeFile(targetZipFile.c_str());
+                            _httpClient->setDownloadPath("");
+                            _httpClient->setProgressEnabledFlag(false);
+                            _httpClient->_curSectionDownloadPath = "";
 
-					_curSectionCount += 1;
-					std::string strSection = std::to_string(_curSectionCount);
-					
-					for (int i = 0; i < strSection.size(); ++i)
-					{
-						success.push_back(strSection[i]);
+                            response->setResponseData(&success);
+                            callback(this, response);
+                        }
 					}
-					response->setResponseData(&success);
-					callback(this, response);
+                    else
+                    {
+                        callback(this, response);
+                    }
 				}
 				else
 				{
@@ -231,10 +236,15 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
                 client->setDownloadSpeedLimit(std::stol(speed, nullptr, 10));
             }
 
-            if (0 == strcmp(header.c_str(), "progress: true"))
+            if (std::string::npos != (findPos = header.find("progress")))
             {
-                client->setProgressEnabledFlag(true);
-                client->setFileFetchUrl(std::string(request->getUrl()));
+                std::string progress = header.substr(findPos + strlen("progress") + 2);
+                //CCLOG("current downloading file speed limit:%s\n", speed.c_str());
+                if (0 == strcmp(progress.c_str(), "true"))
+                {
+                    client->setProgressEnabledFlag(true);
+                    client->setFileFetchUrl(std::string(request->getUrl()));
+                }
             }
 
             unsigned long i = header.find(':', 0);
@@ -301,6 +311,10 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
     while( httpAsynConn.finish != true)
     {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+        // long sectionCount = [httpAsynConn.connData length];
+        // const void* ptr = [httpAsynConn.responseData bytes];
+        // long sectionsCount = [httpAsynConn.responseData length];
+        // _httpClient->dispatchProgress(ptr, sectionsCount, sectionCount);
     }
     
     //if http connection return error
@@ -372,14 +386,14 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
     long len = [httpAsynConn.responseData length];
     recvBuffer->insert(recvBuffer->end(), (char*)ptr, (char*)ptr+len);
 
-    if (nullptr != _httpClient)
+    /*if (nullptr != _httpClient)
 	{
 		long downloadedSize = _httpClient->getDownloadingFileSizeCount();
 		downloadedSize += len;
 		_httpClient->setDownloadingFileSizeCount(downloadedSize);
 		long totalSize = _httpClient->getFileSizeCount();
 		double sizeRatio = 0 == totalSize ? 0.0f : (downloadedSize * 1.0) / totalSize;
-		int perRatio = ceil(sizeRatio * 100);
+		int perRatio = floor(sizeRatio * 100);
 		bool progressFlag = _httpClient->getProgressEnabledFlag();
 		std::string fetchUrl = _httpClient->getFileFetchUrl();
 		std::string fetchSize = _httpClient->calcUniformCapacity(totalSize * 1.0f);
@@ -402,7 +416,7 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
 			}
 
 			Scheduler *scheduler = Director::getInstance()->getScheduler();
-			if (nullptr != scheduler && perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)))
+			if (nullptr != scheduler && (perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)) || 100 == perRatio))
 			{
 				scheduler->performFunctionInCocosThread([fetchUrl, perRatio, fetchSize]{
 					EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
@@ -413,9 +427,15 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
 					dispatcher->dispatchCustomEvent("URL_FETCH_PROGRESS", (void*)(data.c_str()));
 				});
 				_httpClient->_prevPerRatioMarked = perRatio;
+				if (100 == perRatio)
+				{
+					_httpClient->_fileDownloadingSizeCount = 0;
+					_httpClient->_fileSizeCount = 0;
+					_httpClient->_prevPerRatioMarked = 0;
+				}
 			}
 		}
-	}
+	}*/
     
     return 1;
 }
@@ -609,6 +629,61 @@ long HttpClient::getFileSizeCount()
 void HttpClient::setFileSizeCount(long size)
 {
 	_fileSizeCount = size;
+}
+
+void HttpClient::dispatchProgress(const void* ptr, long counts, long count)
+{
+    if (nullptr != _httpClient)
+	{
+        long len = count;
+		long downloadedSize = _httpClient->getDownloadingFileSizeCount();
+		downloadedSize += len;
+		_httpClient->setDownloadingFileSizeCount(downloadedSize);
+		long totalSize = _httpClient->getFileSizeCount();
+		double sizeRatio = 0 == totalSize ? 0.0f : (downloadedSize * 1.0) / totalSize;
+		int perRatio = floor(sizeRatio * 100);
+		bool progressFlag = _httpClient->getProgressEnabledFlag();
+		std::string fetchUrl = _httpClient->getFileFetchUrl();
+		std::string fetchSize = _httpClient->calcUniformCapacity(totalSize * 1.0f);
+		if (progressFlag)
+		{
+			if (NULL == _httpClient->_fop)
+			{
+				std::string fPath = _httpClient->getDownloadPath();
+				std::string fFetchUrl = _httpClient->getFileFetchUrl();
+				std::string fName = fFetchUrl.substr(fFetchUrl.find_last_of("/") + 1);
+				std::string fSavePath = fPath + fName;
+				_httpClient->_curSectionDownloadPath = fSavePath;
+				_httpClient->_fop = fopen(fSavePath.c_str(), "wb+");
+			}
+			size_t writtenSize = fwrite(ptr, sizeof(char), len, _httpClient->_fop);
+			if (downloadedSize == totalSize)
+			{
+				fclose(_httpClient->_fop);
+				_httpClient->_fop = NULL;
+			}
+
+			Scheduler *scheduler = Director::getInstance()->getScheduler();
+			if (nullptr != scheduler && (perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)) || 100 == perRatio))
+			{
+				scheduler->performFunctionInCocosThread([fetchUrl, perRatio, fetchSize]{
+					EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
+					std::string data("{\"url\":\"");
+					data += fetchUrl + "\",\"percent\":\"";
+					data += std::to_string(perRatio) + "\",\"size\":\"";
+					data += fetchSize + "\"}";
+					dispatcher->dispatchCustomEvent("URL_FETCH_PROGRESS", (void*)(data.c_str()));
+				});
+				_httpClient->_prevPerRatioMarked = perRatio;
+				if (100 == perRatio)
+				{
+					_httpClient->_fileDownloadingSizeCount = 0;
+					_httpClient->_fileSizeCount = 0;
+					_httpClient->_prevPerRatioMarked = 0;
+				}
+			}
+		}
+	}
 }
 
 std::string HttpClient::getFileFetchUrl()

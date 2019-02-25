@@ -128,7 +128,7 @@ public:
     
     bool init(HttpRequest* request)
     {
-        createHttpURLConnection(request->getUrl(), "5459");
+        createHttpURLConnection(request->getUrl());
         if(!configure())
         {
             return false;
@@ -169,10 +169,14 @@ public:
 					_client->setDownloadSpeedLimit(atoi(speed.c_str()));
 				}
 
-				if (0 == strcmp(header.c_str(), "progress: true"))
+				if (std::string::npos != (findPos = header.find("progress")))
 				{
-					_client->setProgressEnabledFlag(true);
-					_client->setFileFetchUrl(std::string(request->getUrl()));
+					std::string progress = header.substr(findPos + strlen("progress") + 2);
+                    if (0 == strcmp(progress.c_str(), "true"))
+                    {
+					    _client->setProgressEnabledFlag(true);
+					    _client->setFileFetchUrl(std::string(request->getUrl()));
+                    }
 				}
 				
                 int len = header.length();
@@ -184,6 +188,7 @@ public:
 
                 std::string str1 = header.substr(0, pos);
                 std::string str2 = header.substr(pos + 1, len - pos - 1);
+				
                 addRequestHeader(str1.c_str(), str2.c_str());
             }
         }
@@ -438,21 +443,19 @@ public:
     }
     
 private:
-    void createHttpURLConnection(const std::string& url, const std::string& size)
+    void createHttpURLConnection(const std::string& url)
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
             "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
             "createHttpURLConnection",
-            "(Ljava/lang/String;Ljava/lang/String;)Ljava/net/HttpURLConnection;"))
+            "(Ljava/lang/String;)Ljava/net/HttpURLConnection;"))
         {
             _url = url;
             jstring jurl = methodInfo.env->NewStringUTF(url.c_str());
-            jstring jsize = methodInfo.env->NewStringUTF(size.c_str());
-            jobject jObj = methodInfo.env->CallStaticObjectMethod(methodInfo.classID, methodInfo.methodID, jurl, jsize);
+            jobject jObj = methodInfo.env->CallStaticObjectMethod(methodInfo.classID, methodInfo.methodID, jurl);
             _httpURLConnection = methodInfo.env->NewGlobalRef(jObj);
             methodInfo.env->DeleteLocalRef(jurl);
-            methodInfo.env->DeleteLocalRef(jsize);
             methodInfo.env->DeleteLocalRef(jObj);
             methodInfo.env->DeleteLocalRef(methodInfo.classID);
         }
@@ -755,18 +758,8 @@ void HttpClient::processResponse(HttpResponse* response, char* responseMessage)
 		if (nullptr != _httpClient)
 		{
 			bool progressFlag = _httpClient->getProgressEnabledFlag();
-			if (progressFlag)
+			if(progressFlag)
 			{
-				long downloadedSize = _httpClient->getDownloadingFileSizeCount();
-				// CCLOG("getDownloadingFileSizeCount:%ld", downloadedSize);
-				downloadedSize += sizes;
-				_httpClient->setDownloadingFileSizeCount(downloadedSize);
-				long totalSize = _httpClient->getFileSizeCount();
-				// CCLOG("getFileSizeCount:%ld", totalSize);
-				double sizeRatio = 0 == totalSize ? 0.0f : (downloadedSize * 1.0) / totalSize;
-				int perRatio = ceil(sizeRatio * 100);
-				std::string fetchUrl = _httpClient->getFileFetchUrl();
-				std::string fetchSize = _httpClient->calcUniformCapacity(totalSize * 1.0f);
 				if (NULL == _httpClient->_fop)
 				{
 					std::string fPath = _httpClient->getDownloadPath();
@@ -775,33 +768,38 @@ void HttpClient::processResponse(HttpResponse* response, char* responseMessage)
 					std::string fSavePath = fPath + fName;
 					_httpClient->_curSectionDownloadPath = fSavePath;
 					_httpClient->_fop = fopen(fSavePath.c_str(), "wb+");
-				}
-				size_t writtenSize = fwrite(contentInfo, sizeof(char), sizes, _httpClient->_fop);
-				if (downloadedSize == totalSize)
-				{
-					fclose(_httpClient->_fop);
+                    size_t writtenSize = fwrite(contentInfo, sizeof(char), sizes, _httpClient->_fop);
+                    fclose(_httpClient->_fop);
 					_httpClient->_fop = NULL;
-				}
-				Scheduler *scheduler = Director::getInstance()->getScheduler();
-				if (nullptr != scheduler && perRatio - _httpClient->_prevPerRatioMarked >= (RandomHelper::random_int(2, 6)))
-				{
-					scheduler->performFunctionInCocosThread([fetchUrl, perRatio, fetchSize]{
-						EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
-						std::stringstream ssPerRatio;
-						std::string strPerRatio;
-						ssPerRatio<<perRatio;
-						strPerRatio = ssPerRatio.str();
-						std::string data("{\"url\":\"");
-						data += fetchUrl + "\",\"percent\":\"";
-						data += strPerRatio + "\",\"size\":\"";
-						data += fetchSize + "\"}";
-						dispatcher->dispatchCustomEvent("URL_FETCH_PROGRESS", (void*)(data.c_str()));
-					});
-					_httpClient->_prevPerRatioMarked = perRatio;
+                    std::vector<char> success = {};
+                    if (std::string::npos != fFetchUrl.find(".zip"))
+                    {
+                        bool isGzip = ZipUtils::unZipFile(fSavePath.c_str(), fPath.c_str());
+                        if (!isGzip)
+                        {
+                            success = {'e', 'r', 'r', 'o', 'r'};
+                        }
+                        else
+                        {
+                            for (int i = 0; i < fFetchUrl.size(); ++i)
+                            {
+                                success.push_back(fFetchUrl[i]);
+                            }
+                            FileUtils::getInstance()->removeFile(fSavePath.c_str());
+                        }
+                        response->setResponseData(&success);
+                    }
+
+                    _httpClient->setDownloadPath("");
+                    _httpClient->setFileSizeCount(0);
+                    _httpClient->setDownloadSectionCount(0);
+                    _httpClient->setDownloadSpeedLimit(0);
+                    _httpClient->setProgressEnabledFlag(false);
 				}
 			}
 		}
     }
+    
     free(contentInfo);
     
     char *messageInfo = urlConnection.getResponseMessage();
@@ -897,44 +895,7 @@ void HttpClient::networkThreadAlone(HttpRequest* request, HttpResponse* response
 
             if (callback != nullptr)
             {
-                bool downloadPathSet = false;
-				if (nullptr != _httpClient)
-				{
-					downloadPathSet = _httpClient->getDownloadPath().length() > 0;
-				}
-
-				if (downloadPathSet)
-				{
-					std::vector<char> success = { 'o', 'k', ':' };
-					std::string targetZipFile = _httpClient->_curSectionDownloadPath;
-					if (std::string::npos != targetZipFile.find(".zip"))
-					{
-						bool isGzip = ZipUtils::unZipFile(targetZipFile.c_str(), _httpClient->getDownloadPath().c_str());
-						if (!isGzip)
-						{
-							success = { 'n', 'o', 'k', ':' };
-						}
-						else
-						{
-							FileUtils::getInstance()->removeFile(targetZipFile.c_str());
-						}
-					}
-					_curSectionCount += 1;	
-					std::stringstream ssSection;
-					std::string strSection;
-					ssSection<<_curSectionCount;
-					strSection = ssSection.str();
-					for (int i = 0; i < strSection.size(); ++i)
-					{
-						success.push_back(strSection[i]);
-					}
-					response->setResponseData(&success);
-					callback(this, response);
-				}
-				else
-				{
-					callback(this, response);
-				}
+                callback(this, response);
             }
             else if (pTarget && pSelector)
             {
