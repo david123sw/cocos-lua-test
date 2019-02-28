@@ -14,6 +14,8 @@
         <!-- Tell Cocos2dxActivity the name of our .so -->
         <meta-data android:name="android.app.lib_name"
                   android:value="cocos2dlua" />
+
+        <meta-data android:name="android.max_aspect" android:value="2.4"/>
 					  
         <activity android:name="org.game.AppActivity"
        		      android:launchMode="singleTask"
