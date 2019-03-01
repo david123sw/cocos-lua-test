@@ -161,7 +161,7 @@ def Main():
                 workDirFilePath = realPath.replace(projectDevDirs, workDirs)
                 workFilePath, workFileName = os.path.split(workDirFilePath)
                 ignoreSubGame = -1
-                
+
                 if True == cmdParams['subgame']:
                     print u"提取子游戏文件"
                     for sgp in subGamePathList:
@@ -170,7 +170,11 @@ def Main():
                             break
                 if not os.path.exists(workFilePath):
                     os.makedirs(workFilePath)
-                print u"复制文件 " + workFileName
+
+                if -1 < ignoreSubGame:    
+                    print u"复制文件 " + workFileName
+                else:
+                    print u"忽略该文件 " + workFileName
 
                 ignoreFramework = path.find(r'/frameworks')
                 if -1 < ignoreFramework:
