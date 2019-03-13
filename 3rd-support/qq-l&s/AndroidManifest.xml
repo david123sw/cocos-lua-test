@@ -121,7 +121,9 @@
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
 
-        <service android:name="com.yunva.im.sdk.lib.service.VioceService" />
+		<!-- <service android:name="com.yunva.im.sdk.lib.service.VioceService" /> -->
+
+		<service android:name="com.pg.core.sdk.lib.YayaService"/>
 
         <!-- alipay sdk end -->
         
