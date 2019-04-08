@@ -169,7 +169,7 @@ private:
     void decreaseThreadCountAndMayDeleteThis();
 
 public:
-	FILE *_fop;
+		FILE *_fop;
 	long _curSectionCount;
 	std::string _curSectionDownloadPath;
 	long _prevPerRatioMarked;
@@ -198,7 +198,6 @@ public:
 	void setDownloadingFileSizeCount(long size);
 	long getFileSizeCount();
 	void setFileSizeCount(long size);
-	void dispatchProgress(const void* ptr, long counts, long count);
     
 private:
     bool _isInited;

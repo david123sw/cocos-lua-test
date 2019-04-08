@@ -286,6 +286,7 @@ public class Cocos2dxHttpURLConnection
             byte[] buffer = new byte[1024];
             int size   = 0;
             ByteArrayOutputStream bytestream = new ByteArrayOutputStream();
+			Random gr = new Random(168);
             while((size = in.read(buffer, 0 , 1024)) != -1)
             {
                 bytestream.write(buffer, 0, size);
@@ -294,8 +295,9 @@ public class Cocos2dxHttpURLConnection
 				{
 					readingSize += size;
 					int percent = (int)(readingSize * 1.0 / totalSize * 100);
-					long gap = (int)(Math.random() * 4) + 2;
-					if(percent - prevReadingPercent > gap || readingSize == totalSize) {
+					int gap = Math.abs(gr.nextInt() % 3) + 1;					
+					//int gap = 1;
+					if(percent - prevReadingPercent >= gap || readingSize == totalSize) {
 						final String jsonStr = "{\"type\":\"" + "URL_FETCH_PROGRESS" + "\", \"percent\":" + String.format("%d", percent) +", \"size\":\""+ calcUniformCapacity(totalSize*1.0) + "\", \"url\":\""+ targetURL + "\"}";
 						Cocos2dxHelper.runOnGLThread(new Runnable() {
 							@Override

@@ -311,10 +311,34 @@ static int processTask(HttpClient* client, HttpRequest* request, NSString* reque
     while( httpAsynConn.finish != true)
     {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-        // long sectionCount = [httpAsynConn.connData length];
-        // const void* ptr = [httpAsynConn.responseData bytes];
-        // long sectionsCount = [httpAsynConn.responseData length];
-        // _httpClient->dispatchProgress(ptr, sectionsCount, sectionCount);
+		long sectionCount = [httpAsynConn.connData length];
+        long sectionsCount = [httpAsynConn.responseData length];
+		long downloadedSize = sectionsCount;
+		long totalSize = _httpClient->getFileSizeCount();
+		double sizeRatio = 0 == totalSize ? 0.0f : (downloadedSize * 1.0) / totalSize;
+		int perRatio = floor(sizeRatio * 100);
+        std::string fetchUrl = _httpClient->getFileFetchUrl();
+		std::string fetchSize = _httpClient->calcUniformCapacity(totalSize * 1.0f);
+        Scheduler *scheduler = Director::getInstance()->getScheduler();
+		int diffGap = (arc4random() % 3) + 1;
+        if (nullptr != scheduler && (perRatio - _httpClient->_prevPerRatioMarked >= (diffGap) || 100 == perRatio))
+        {
+            scheduler->performFunctionInCocosThread([fetchUrl, perRatio, fetchSize]{
+                EventDispatcher* dispatcher = Director::getInstance()->getEventDispatcher();
+                std::string data("{\"url\":\"");
+                data += fetchUrl + "\",\"percent\":\"";
+                data += std::to_string(perRatio) + "\",\"size\":\"";
+                data += fetchSize + "\"}";
+                dispatcher->dispatchCustomEvent("URL_FETCH_PROGRESS", (void*)(data.c_str()));
+            });
+            _httpClient->_prevPerRatioMarked = perRatio;
+            if (100 == perRatio)
+            {
+                _httpClient->_fileDownloadingSizeCount = 0;
+                _httpClient->_fileSizeCount = 0;
+                _httpClient->_prevPerRatioMarked = 0;
+            }
+        }
     }
     
     //if http connection return error
@@ -508,8 +532,8 @@ void HttpClient::setSSLVerification(const std::string& caFile)
 }
 
 HttpClient::HttpClient()
-: _timeoutForConnect(30)
-, _timeoutForRead(60)
+: _timeoutForConnect(60)
+, _timeoutForRead(120)
 , _isInited(false)
 , _threadCount(0)
 , _requestSentinel(new HttpRequest())
