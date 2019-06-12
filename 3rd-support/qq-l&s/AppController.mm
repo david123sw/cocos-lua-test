@@ -866,6 +866,38 @@ NSString* parseUrlFromStr(NSString *string)
     [UIDevice currentDevice].batteryMonitoringEnabled = true;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryChargingStateChange:) name:@"UIDeviceBatteryStateDidChangeNotification" object:[UIDevice currentDevice]];
     
+	     self.callCenter = [[CTCallCenter alloc] init];
+     self.callCenter.callEventHandler = ^(CTCall * call)
+     {
+         NSLog(@"call event:%@", call.callState);
+         if(call.callState == CTCallStateIncoming)
+         {
+             //nothing
+         }
+         else if(call.callState == CTCallStateConnected)
+         {
+             //nothing
+         }
+         else if(call.callState == CTCallStateDisconnected)
+         {
+             NSMutableDictionary *data  = [[NSMutableDictionary alloc] init];
+             [data setValue:@"replay_bgm" forKey:@"type"];
+             NSString * code = [NSString stringWithFormat:@"%@", @"0"];
+             [data setValue:code forKey:@"code"];
+             NSData *jsonData = [NSJSONSerialization dataWithJSONObject:data options:NSJSONWritingPrettyPrinted error:nil];
+             NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+             [jstools sendToLuaByWxCode:jsonString];
+             [data release];
+         }
+         else if(call.callState == CTCallStateDialing)
+         {
+             //nothign
+         }
+         else
+         {
+             //nothing
+         }
+     };
     return YES;
 }
 

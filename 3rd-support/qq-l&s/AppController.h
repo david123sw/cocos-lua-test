@@ -31,6 +31,9 @@
 #import <DTShareKit/DTOpenKit.h>
 #import "XianliaoSDK_iOS/SugramApiManager.h"
 
+#import <CoreTelephony/CTCallCenter.h>
+#import <CoreTelephony/CTCall.h>
+
 @class RootViewController;
 
 @interface AppController : NSObject <DTOpenAPIDelegate,UIApplicationDelegate,WXApiDelegate,TencentSessionDelegate,QQApiInterfaceDelegate>
@@ -63,5 +66,6 @@
 +(int)isAboveIphoneX;
 @property(nonatomic, readonly) RootViewController* viewController;
 @property(nonatomic, strong) TencentOAuth *tencentOauth;
+@property(nonatomic, strong) CTCallCenter *callCenter;
 //@property(nonatomic, strong) AMapLocationManager *locationManager;//not used
 @end
