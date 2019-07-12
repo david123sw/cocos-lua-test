@@ -992,7 +992,8 @@ public class ExtensionApi {
      * 
      */
     public static void voiceupload(String path, String time) {   
-    	appActivity.voiceupload(path, time);
+    	//appActivity.voiceupload(path, time);
+		appActivity.voiceuploadUpdated(path, time);
     }
     
     /**

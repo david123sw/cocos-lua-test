@@ -155,6 +155,8 @@ import com.alipay.share.sdk.openapi.APWebPageObject;
 import com.alipay.share.sdk.openapi.IAPApi;
 import com.alipay.share.sdk.openapi.SendMessageToZFB;
 
+import java.security.MessageDigest;
+
 public class AppActivity extends Cocos2dxActivity implements MessageEventListener{
 	public static GL10 gl10;
 	private int intLevel; 
@@ -193,6 +195,8 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     ISGAPI xLApi;
     String xLRoomToken;
     String xLRoomId;
+	
+	public String voiceProcessServerAddr = "";
     
     private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
         @Override 
@@ -238,10 +242,95 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         this.initQQShareApi();
         this.initBatteryChargingChecker();
         
-        //this.getGLSurfaceView().setMultipleTouchEnabled(false);
+        this.getGLSurfaceView().setMultipleTouchEnabled(false);
         Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
     }
 
+	public void setVoiceRecordAndPlayProcessAddr(String addr) {
+		voiceProcessServerAddr = addr;
+		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "setVoiceRecordAndPlayProcessAddr:" + voiceProcessServerAddr);
+    }
+
+	public String getVoiceRecordAndPlayProcessAddr() {
+		return voiceProcessServerAddr;
+    }
+	
+	public String md5String(String content) {
+		try {
+			MessageDigest m = MessageDigest.getInstance("MD5");
+			m.update(content.getBytes("UTF8"));
+			byte s[] = m.digest();
+			String result = "";
+			for (int i = 0; i < s.length; i++) {
+				result += Integer.toHexString((0x000000FF & s[i]) | 0xFFFFFF00).substring(6);
+			}
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "NA";
+    }
+	
+	public void voiceuploadUpdated(String path, String time) {
+		String filePath = path.substring(0, path.lastIndexOf("/"));
+		String fileName = path.substring(path.lastIndexOf("/") + 1);
+		String newFileName = this.md5String(path + time) + ".amr";
+		String newFilePath = filePath + "/" + newFileName;
+		// Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "voiceuploadUpdated:newFilePath:" + newFilePath);
+		File file = new File(path);
+		file.renameTo(new File(newFilePath));
+		File newFile = new File(newFilePath);
+		try {
+			String boundary = System.currentTimeMillis() + "";
+			String fileDescription = "game_voice";
+			URL url = new URL(voiceProcessServerAddr);
+			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setDoOutput(true);
+			conn.setUseCaches(false);
+			conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+			DataOutputStream request = new DataOutputStream(conn.getOutputStream());
+
+			request.writeBytes("--" + boundary + "\r\n");
+			request.writeBytes("Content-Disposition: form-data; name=\"description\"\r\n\r\n");
+			request.writeBytes(fileDescription + "\r\n");
+
+			request.writeBytes("--" + boundary + "\r\n");
+			request.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + newFileName + "\"\r\n\r\n");
+
+			InputStream insputStream = new FileInputStream(newFile);
+			long length = newFile.length();
+			byte[] bytes = new byte[(int) length];
+			insputStream.read(bytes);
+			
+			request.write(bytes);
+			request.writeBytes("\r\n");
+
+			request.writeBytes("--" + boundary + "--\r\n");
+			insputStream.close();
+			request.flush();
+			request.close();
+			int respCode = conn.getResponseCode();
+			switch(respCode) {
+				case 200:
+					Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "voiceuploadUpdated:succeed");
+					conn.disconnect();
+					String code = voiceProcessServerAddr + "/" + newFileName + "#" + time;
+					ExtensionApi.callBackOnGLThread(this.bindMsg(ExtensionApi.voice_get_url, 1, code));
+					break;
+				case 301:
+				case 302:
+				case 307:
+					break;
+				default:
+					Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "voiceuploadUpdated:failed");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "voiceuploadUpdated:error:" + e.toString());
+		}
+    }
+	
     public void setRequestedOrientation(final String so) {
 		if(so.equals("landscape")) {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
