@@ -1,0 +1,5 @@
+download-fast-link
+android:
+http://download.fir.im/apps/5caea1ba959d69615c7fca8d/install?download_token=76c59104941989a7cfb81bee962612ed
+ios:
+itms-services://?action=download-manifest&url=https%3A%2F%2Fdownload.fir.im%2Fapps%2F5caea3fcca87a8177dfd5cb5%2Finstall%3Fdownload_token%3D9a727214b15693e348d7911f50327993
