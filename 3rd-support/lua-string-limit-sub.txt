@@ -1,15 +1,15 @@
 local function checkName2( str, numChars )
-	local function chSize(char)
+    local function chSize(char)
         if not char then
             return 0
-        elseif char > 240 then
-            return 4
-        elseif char > 225 then
-            return 3
-        elseif char > 192 then
-            return 2
-        else
+        elseif char > 0 and char <= 127 then
             return 1
+        elseif char >= 192 and char <= 223 then
+            return 2
+        elseif char >= 224 and char <= 239 then
+            return 3
+        elseif char >= 240 and char <= 247 then
+            return 4
         end
     end
 
