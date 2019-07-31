@@ -39,16 +39,14 @@
 #import <CoreLocation/CoreLocation.h>
 #import <AMapFoundationKit/AMapFoundationKit.h>
 #include "scripting/lua-bindings/manual/CCLuaEngine.h"
-#import <Foundation/Foundation.h>
-#import <Security/Security.h>
 #import <AVFoundation/AVFoundation.h>
 
 //Add TalkingData support
 #include "TalkingData.h"
 
 //Add GDMap support
-const static NSString *GD_API_KEY = @"a5a67e8d34514acf5b157a122944ab76";
-static NSString *QQ_API_KEY = @"101489510";
+const static NSString *GD_API_KEY = @"66775bfbe1fcc2b92bc5029e3661bf10";
+static NSString *QQ_API_KEY = @"101561682";
 
 @implementation AppController
 
@@ -78,6 +76,30 @@ NSString* parseUrlFromStr(NSString *string)
         return substringForMatch;
     }
     return NULL;
+}
+
++(BOOL)launchWXMiniProgram:(NSDictionary *)dict
+{
+    NSString *miniID = [dict objectForKey:@"miniID"];
+    NSString *miniPath = [dict objectForKey:@"miniPath"];
+    NSString *miniType = [dict objectForKey:@"miniType"];
+
+    WXLaunchMiniProgramReq *launchMiniProgramReq = [WXLaunchMiniProgramReq object];
+    launchMiniProgramReq.userName = miniID;
+    if(NSOrderedSame != [miniPath compare:@""])
+    {
+        launchMiniProgramReq.path = miniPath;   
+    }
+    if(NSOrderedSame == [miniType compare:@"0"])
+    {
+        launchMiniProgramReq.miniProgramType = WXMiniProgramTypeRelease;
+    }
+    else
+    {
+        launchMiniProgramReq.miniProgramType = WXMiniProgramTypePreview;
+    }
+    
+    return [WXApi sendReq:launchMiniProgramReq];
 }
 
 +(int)isAboveIphoneX
@@ -119,6 +141,93 @@ NSString* parseUrlFromStr(NSString *string)
     else {
         NSLog(@"QQ installed no");
         return 0;
+    }
+}
+
++(int) isZFBInstalled{
+    BOOL r = [APOpenAPI isAPAppInstalled];
+    if (r) {
+        NSLog(@"zfb installed yes");
+        return 1;
+    }
+    else {
+        NSLog(@"zfb installed no");
+        return 0;
+    }
+}
+
++(void) zfbShareMsg:(NSDictionary *)dict
+{
+    NSString *shareType = [dict objectForKey:@"shareType"];
+    NSString *shareText = [dict objectForKey:@"shareText"];
+    NSString *shareTitle = [dict objectForKey:@"shareTitle"];
+    NSString *shareDesc = [dict objectForKey:@"shareDesc"];
+    NSString *shareUrl = [dict objectForKey:@"shareUrl"];
+    NSString *sharePreUrl = [dict objectForKey:@"sharePreUrl"];
+    
+    NSLog(@"shareType-->%@", shareType);
+    NSLog(@"shareText-->%@", shareText);
+    NSLog(@"shareTitle-->%@", shareTitle);
+    NSLog(@"shareDesc-->%@", shareDesc);
+    NSLog(@"shareUrl-->%@", shareUrl);
+    NSLog(@"sharePreUrl-->%@", sharePreUrl);
+    
+    if([shareType isEqualToString:@"shareText"])
+    {
+        APMediaMessage *message = [[APMediaMessage alloc] init];
+        APShareTextObject *textObj = [[APShareTextObject alloc] init];
+        textObj.text = shareText;
+        message.mediaObject = textObj;
+        APSendMessageToAPReq *request = [[APSendMessageToAPReq alloc] init];
+        request.message = message;
+        request.scene = APSceneSession;
+        BOOL result = [APOpenAPI sendReq:request];
+        if (!result) {
+            NSLog(@"发送失败!");
+        }
+    }
+    else if([shareType isEqualToString:@"shareLocalImg"]){
+        APMediaMessage *message = [[APMediaMessage alloc] init];
+        APShareImageObject *imgObj = [[APShareImageObject alloc] init];
+        imgObj.imageData = [NSData dataWithContentsOfFile:sharePreUrl];
+        message.mediaObject = imgObj;
+        APSendMessageToAPReq *request = [[APSendMessageToAPReq alloc] init];
+        request.message = message;
+        request.scene = APSceneSession;
+        BOOL result = [APOpenAPI sendReq:request];
+        if (!result) {
+            NSLog(@"发送失败!");
+        }
+    }
+    else if([shareType isEqualToString:@"shareUrl"]){        
+        APMediaMessage *message = [[APMediaMessage alloc] init];
+        message.title = shareTitle;
+        message.desc = shareDesc;
+        message.thumbUrl = sharePreUrl;
+        APShareWebObject *webObj = [[APShareWebObject alloc] init];
+        webObj.wepageUrl = shareUrl;
+        message.mediaObject = webObj;
+        APSendMessageToAPReq *request = [[APSendMessageToAPReq alloc] init];
+        request.message = message;
+        request.scene = APSceneSession;
+        BOOL result = [APOpenAPI sendReq:request];
+        if (!request) {
+            NSLog(@"发送失败!");
+        }
+    }
+    else {
+        //默认WebImage
+        APMediaMessage *message = [[APMediaMessage alloc] init];
+        APShareImageObject *imgObj = [[APShareImageObject alloc] init];
+        imgObj.imageUrl = sharePreUrl;
+        message.mediaObject = imgObj;
+        APSendMessageToAPReq *request = [[APSendMessageToAPReq alloc] init];
+        request.message = message;
+        request.scene = APSceneSession;
+        BOOL result = [APOpenAPI sendReq:request];
+        if (!result) {
+            NSLog(@"发送失败!");
+        }
     }
 }
 
@@ -173,8 +282,8 @@ NSString* parseUrlFromStr(NSString *string)
         game.title = shareTitle;
         game.text = shareDesc;
         game.imageUrl = sharePreUrl;
-        game.androidDownloadUrl = @"https://fir.im/ywglzp1";
-        game.iOSDownloadUrl = @"https://fir.im/ywglzp2";
+        game.androidDownloadUrl = @"https://fir.im/newkulongdaishen01";
+        game.iOSDownloadUrl = @"https://fir.im/newkulongdaishen02";
         //game.imageData = [self imageData];
         [SugramApiManager share:game fininshBlock:^(SugramShareCallBackType callBackType) {
             NSLog(@"callBackType:%ld", (long)callBackType);
@@ -359,20 +468,20 @@ NSString* parseUrlFromStr(NSString *string)
 }
 
 +(NSString *) getDeviceId {
-    NSString *saveKeyTag = @"com.sevenjzc.ywglzp";
+    NSString *saveKeyTag = @"com.sevenjzc.yyjddmj";
     NSString *deviceId = (NSString *)[AppController loadDeviceId:saveKeyTag];
     //NSLog(@"从Keychain里获得的CFUUID %@", deviceId);
     if(!deviceId || [deviceId isEqualToString:@""] || [deviceId isKindOfClass:[NSNull class]]) {
         NSString *idfv = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
         NSMutableDictionary *keychainQuery2 = [NSMutableDictionary dictionaryWithObjectsAndKeys:(id)kSecClassGenericPassword,
-                                              (id)kSecClass,
-                                              saveKeyTag,
-                                              (id)kSecAttrService,
-                                              saveKeyTag,
-                                              (id)kSecAttrAccount,
-                                              (id)kSecAttrAccessibleAfterFirstUnlock,
-                                              (id)kSecAttrAccessible,
-                                              nil];
+                                               (id)kSecClass,
+                                               saveKeyTag,
+                                               (id)kSecAttrService,
+                                               saveKeyTag,
+                                               (id)kSecAttrAccount,
+                                               (id)kSecAttrAccessibleAfterFirstUnlock,
+                                               (id)kSecAttrAccessible,
+                                               nil];
         SecItemDelete((CFDictionaryRef)keychainQuery2);
         [keychainQuery2 setObject:[NSKeyedArchiver archivedDataWithRootObject:idfv] forKey:(id)kSecValueData];
         SecItemAdd((CFDictionaryRef)keychainQuery2, NULL);
@@ -514,7 +623,6 @@ NSString* parseUrlFromStr(NSString *string)
     {
         NSLog(@"app has enter foreground:%@", pasteboard.string);
         [AppController setRoomId:parseUrlFromStr(pasteboard.string)];
-        //pasteboard.string = @"";
     }
     
     if(roomid != NULL){
@@ -788,7 +896,7 @@ NSString* parseUrlFromStr(NSString *string)
     _viewController.wantsFullScreenLayout = YES;
     //_viewController.navigationController.interactivePopGestureRecognizer.enabled = NO;
      
-     [self checkColdUpdate];
+    [self checkColdUpdate];
 
     // Set RootViewController to window
     if ( [[UIDevice currentDevice].systemVersion floatValue] < 6.0)
@@ -817,20 +925,28 @@ NSString* parseUrlFromStr(NSString *string)
     [manager requestAlwaysAuthorization];
     [manager requestWhenInUseAuthorization];
      
-	[WXApi registerApp:@"wx5375851cdce0c667" withDescription:@"demo 2.0"];
-     
+    [WXApi startLogByLevel:WXLogLevelNormal logBlock:^(NSString *log) {
+        NSLog(@"log : %@", log);
+    }];
+    [WXApi registerApp:@"wx5e0039d2e2bafecb" enableMTA:YES];
+    UInt64 typeFlag = MMAPP_SUPPORT_TEXT | MMAPP_SUPPORT_PICTURE | MMAPP_SUPPORT_LOCATION | MMAPP_SUPPORT_VIDEO |MMAPP_SUPPORT_AUDIO | MMAPP_SUPPORT_WEBPAGE | MMAPP_SUPPORT_DOC | MMAPP_SUPPORT_DOCX | MMAPP_SUPPORT_PPT | MMAPP_SUPPORT_PPTX | MMAPP_SUPPORT_XLS | MMAPP_SUPPORT_XLSX | MMAPP_SUPPORT_PDF;
+    [WXApi registerAppSupportContentFlag:typeFlag];
+
     //TalkingData
-    TDCCTalkingDataGA::onStart("0E741CE749FE4B3596F26E9028DE8C30", "iOS YWGLZP");
+    TDCCTalkingDataGA::onStart("8184BFF3E45644A8B1070AC07F84F69D", "iOS KLDS2");
      
     //GDMap
     [[AMapServices sharedServices] setEnableHTTPS:YES];
     [AMapServices sharedServices].apiKey = (NSString *)GD_API_KEY;
      
     //DingDing
-    [DTOpenAPI registerApp:@"dingoakifreff8eg3t6tcn"];
+    [DTOpenAPI registerApp:@"dingoabedpquxjackuhytt"];
      
     //XianLiao
-    [SugramApiManager registerApp:@"x88ZXOaO1Q9A1J3F"];
+    [SugramApiManager registerApp:@"mfK4ivhTYSvcnua0"];
+     
+    //Alipay
+    [APOpenAPI registerApp:@"2019030863459737"];
      
     //QQ
     _tencentOauth = [[TencentOAuth alloc] initWithAppId:QQ_API_KEY andDelegate:self];
@@ -866,7 +982,7 @@ NSString* parseUrlFromStr(NSString *string)
     [UIDevice currentDevice].batteryMonitoringEnabled = true;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryChargingStateChange:) name:@"UIDeviceBatteryStateDidChangeNotification" object:[UIDevice currentDevice]];
     
-	     self.callCenter = [[CTCallCenter alloc] init];
+     self.callCenter = [[CTCallCenter alloc] init];
      self.callCenter.callEventHandler = ^(CTCall * call)
      {
          NSLog(@"call event:%@", call.callState);
@@ -898,14 +1014,14 @@ NSString* parseUrlFromStr(NSString *string)
              //nothing
          }
      };
-    return YES;
+     return YES;
 }
 
 -(void)checkColdUpdate
 {
     std::string pth = cocos2d::FileUtils::getInstance()->getWritablePath();
     NSString *nPth = [NSString stringWithCString:pth.c_str() encoding:NSASCIIStringEncoding];
-    NSLog(@"pth--->%@", nPth);
+    //NSLog(@"pth--->%@", nPth);
     NSFileManager *fileMgr=[NSFileManager defaultManager];
     
     NSString *verPth = [NSString stringWithCString:(pth+"version.manifest").c_str() encoding:NSASCIIStringEncoding];
@@ -1053,6 +1169,7 @@ NSString* parseUrlFromStr(NSString *string)
      */
     // We don't need to call this method any more. It will interrupt user defined game pause&resume logic
     /* cocos2d::Director::getInstance()->pause(); */
+    NSLog(@"applicationWillResignActive");
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -1061,6 +1178,7 @@ NSString* parseUrlFromStr(NSString *string)
      */
     // We don't need to call this method any more. It will interrupt user defined game pause&resume logic
     /* cocos2d::Director::getInstance()->resume(); */
+    NSLog(@"applicationDidBecomeActive");
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
@@ -1081,9 +1199,7 @@ NSString* parseUrlFromStr(NSString *string)
     if(0 < [pasteboard.string length])
     {
         NSLog(@"app has enter foreground:%@", pasteboard.string);
-        //[AppController setRoomId:[self isUrlType:pasteboard.string]];
         [AppController setRoomId:parseUrlFromStr(pasteboard.string)];
-        //pasteboard.string = @"";
     }
 }
 
@@ -1101,7 +1217,7 @@ NSString* parseUrlFromStr(NSString *string)
 
 -(void) onResp:(BaseResp*)resp
 {
-    NSLog(@" get BaseResp...");
+    NSLog(@"get BaseResp...");
     
     if([resp isKindOfClass:[SendMessageToWXResp class]])
     {
@@ -1119,37 +1235,28 @@ NSString* parseUrlFromStr(NSString *string)
         [jstools sendToLuaByWxCode:[data2 JSONString]];
         NSLog(@"%@",@"ok");
         [data2 release];
-        
-        
     }else if([resp isKindOfClass:[SendAuthResp class]])
     {
-        
         NSMutableDictionary *data;
         data = [[NSMutableDictionary alloc] init];
         SendAuthResp *temp = (SendAuthResp*)resp;
         if (temp.code)
         {
             NSLog(@" wxlogin success %@",temp.code);
-            
             [data setValue:@"weixin_token" forKey:@"type"];
             [data setValue:@"1" forKey:@"status"];
             [data setValue:temp.code forKey:@"code"];
-            
             [jstools sendToLuaByWxCode:[data JSONString]];
-            
         }else
         {
             NSString *errCode = [NSString stringWithFormat:@"%d", resp.errCode];
-            
             NSLog(@" wxlogin error %@",errCode);
             [data setValue:@"weixin_token" forKey:@"type"];
             [data setValue:@"0" forKey:@"status"];
             [data setValue:@"-1" forKey:@"code"];
-            
             [jstools sendToLuaByWxCode:[data JSONString]];
         }
         [data release];
-        
     }else if([resp isKindOfClass:[PayResp class]]){
         NSLog(@"pay");
         NSMutableDictionary *data1;
@@ -1176,20 +1283,29 @@ NSString* parseUrlFromStr(NSString *string)
         [jstools sendToLuaByWxCode:[data2 JSONString]];
         NSLog(@"%@",@"ok");
         [data2 release];
+    }else if([resp isKindOfClass:[APSendMessageToAPResp class]]) {
+        NSLog(@"Alipay share finished.");
+        APSendMessageToAPResp *msg = (APSendMessageToAPResp *)resp;
+        NSMutableDictionary *data2;
+        data2 = [[NSMutableDictionary alloc] init];
+        [data2 setValue:@"alipay_share" forKey:@"type"];
+        [data2 setValue:msg.errStr forKey:@"status"];
+        [data2 setValue:@"ok" forKey:@"code"];
+        [jstools sendToLuaByWxCode:[data2 JSONString]];
+        NSLog(@"%@",@"ok");
+        [data2 release];
     }
 }
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
 {
-    NSLog(@"111----->%@", [url absoluteString]);
+    NSLog(@"openURL_1----->%@", [url absoluteString]);
     return [WXApi handleOpenURL:url delegate:self];
-    
-    //UNDO
 }
 
 -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
-    NSLog(@"222----->%@", [url absoluteString]);
+    NSLog(@"openURL_2----->%@", [url absoluteString]);
     if ([url.absoluteString hasPrefix:@"wx"]) {
         return [WXApi handleOpenURL:url delegate:self];
     }
@@ -1205,6 +1321,10 @@ NSString* parseUrlFromStr(NSString *string)
     
     if ([url.absoluteString hasPrefix:@"xianliao"]) {
         return [SugramApiManager handleOpenURL:url];
+    }
+    
+    if ([url.absoluteString hasPrefix:@"alipay"]) {
+        return [APOpenAPI handleOpenURL:url delegate:self];
     }
     
     [AppController checkAppLink:url];

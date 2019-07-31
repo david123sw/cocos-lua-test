@@ -25,18 +25,20 @@
 
 #import <UIKit/UIKit.h>
 #import "WXApi.h"
+#import "WXApiObject.h"
 #import <AMapLocationKit/AmapLocationKit.h>
 #import <TencentOpenAPI/TencentOauth.h>
 #import <TencentOpenAPI/QQApiInterface.h>
 #import <DTShareKit/DTOpenKit.h>
 #import "XianliaoSDK_iOS/SugramApiManager.h"
+#import "AliShareSDK/APOpenAPI.h"
 
 #import <CoreTelephony/CTCallCenter.h>
 #import <CoreTelephony/CTCall.h>
 
 @class RootViewController;
 
-@interface AppController : NSObject <DTOpenAPIDelegate,UIApplicationDelegate,WXApiDelegate,TencentSessionDelegate,QQApiInterfaceDelegate>
+@interface AppController : NSObject <DTOpenAPIDelegate,UIApplicationDelegate,WXApiDelegate,TencentSessionDelegate,QQApiInterfaceDelegate,APOpenAPIDelegate>
 {
 }
 +(NSString *) getRoomId;
@@ -56,14 +58,17 @@
 +(void) dingTalkShareMsg:(NSDictionary *)dict;
 +(int) isXianLiaoInstalled;
 +(void) xianLiaoShareMsg:(NSDictionary *)dict;
-+(int) isQQInstalled;
-+(int) isDeviceCharging;
++(int) isZFBInstalled;
++(void) zfbShareMsg:(NSDictionary *)dict;
++(int)isQQInstalled;
++(int)isDeviceCharging;
 +(NSString *) getDeviceInfo;
 +(NSString *) getDeviceId;
 +(void)deleteDeviceId:(NSString *)idKey;
 +(id)loadDeviceId:(NSString *)idKey;
 +(NSString*)deviceBrandName;
 +(int)isAboveIphoneX;
++(BOOL)launchWXMiniProgram:(NSDictionary *)dict;
 @property(nonatomic, readonly) RootViewController* viewController;
 @property(nonatomic, strong) TencentOAuth *tencentOauth;
 @property(nonatomic, strong) CTCallCenter *callCenter;

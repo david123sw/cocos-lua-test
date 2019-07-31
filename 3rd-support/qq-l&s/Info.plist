@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDisplayName</key>
-	<string>吆玩桂林字牌</string>
+	<string>窟窿带神</string>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFile</key>
@@ -31,17 +31,17 @@
 			<string>weixin</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>wx5375851cdce0c667</string>
+				<string>wx5e0039d2e2bafecb</string>
 			</array>
 		</dict>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>ywglzp.com</string>
+			<string>cnklds.com</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>ywglzp</string>
+				<string>cnklds</string>
 			</array>
 		</dict>
 		<dict>
@@ -59,7 +59,7 @@
 			<string>tencent</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>tencent101489510</string>
+				<string>tencent101561682</string>
 			</array>
 		</dict>
 		<dict>
@@ -69,7 +69,7 @@
 			<string>dingtalk</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>dingoakifreff8eg3t6tcn</string>
+				<string>dingoabedpquxjackuhytt</string>
 			</array>
 		</dict>
 		<dict>
@@ -79,7 +79,17 @@
 			<string>xianliao</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>xianliaox88ZXOaO1Q9A1J3F</string>
+				<string>xianliaomfK4ivhTYSvcnua0</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>alipayShare</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ap2019030863459737</string>
 			</array>
 		</dict>
 	</array>
@@ -91,6 +101,9 @@
 	<string></string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+		<string>alipaytlshare</string>
+		<string>alipayshare</string>
+		<string>alipay</string>
 		<string>xianliao</string>
 		<string>dingtalk-open</string>
 		<string>dingtalk</string>
@@ -119,7 +132,7 @@
 		<string>mqq</string>
 		<string>mqqapi</string>
 		<string>safepay</string>
-		<string>ywqp</string>
+		<string>cnklds</string>
 		<string>weixin</string>
 		<string>wechat</string>
 	</array>
@@ -131,15 +144,15 @@
 		<true/>
 	</dict>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>吆玩桂林字牌将使用您的定位服务，是否打开？</string>
+	<string>窟窿带神将使用您的定位服务，是否打开？</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>吆玩桂林字牌将使用您的定位服务，是否打开？</string>
+	<string>窟窿带神将使用您的定位服务，是否打开？</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>实时聊天，需要打开您的语音权限</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>允许吆玩桂林字牌访问相册吗？</string>
+	<string>允许窟窿带神将访问相册吗？</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>允许吆玩桂林字牌访问相册吗？</string>
+	<string>允许窟窿带神访问相册吗？</string>
 	<key>UIAppFonts</key>
 	<array/>
 	<key>UIBackgroundModes</key>
