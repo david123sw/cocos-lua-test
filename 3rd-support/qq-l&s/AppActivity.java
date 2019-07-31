@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -83,10 +84,10 @@ import android.text.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.OrientationEventListener;
+import android.view.View;
 import android.widget.Toast;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
-//import android.support.v7.appcompat.*;
 import org.game.PowerConnectionReceiver;
 
 import com.amap.api.location.AMapLocation;
@@ -118,10 +119,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.sevenjzc.hhllqp.ddshare.DDShareActivity;
-import com.sevenjzc.hhllqp.qqapi.QQBaseUIListener;
-import com.sevenjzc.hhllqp.qqapi.QQUtil;
-import com.sevenjzc.hhllqp.qqapi.QQShareActivity;
+import com.sevenjzc.cnklds.ddshare.DDShareActivity;
+import com.sevenjzc.cnklds.qqapi.QQBaseUIListener;
+import com.sevenjzc.cnklds.qqapi.QQUtil;
+import com.sevenjzc.cnklds.qqapi.QQShareActivity;
 import com.android.dingtalk.share.ddsharemodule.DDShareApiFactory;
 import com.android.dingtalk.share.ddsharemodule.IDDShareApi;
 import com.android.dingtalk.share.ddsharemodule.ShareConstant;
@@ -195,7 +196,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     ISGAPI xLApi;
     String xLRoomToken;
     String xLRoomId;
-	
+
 	public String voiceProcessServerAddr = "";
     
     private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
@@ -243,10 +244,10 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         this.initBatteryChargingChecker();
         
         this.getGLSurfaceView().setMultipleTouchEnabled(false);
-        Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
+        Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "onCreate");
     }
 
-	public void setVoiceRecordAndPlayProcessAddr(String addr) {
+    public void setVoiceRecordAndPlayProcessAddr(String addr) {
 		voiceProcessServerAddr = addr;
 		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "setVoiceRecordAndPlayProcessAddr:" + voiceProcessServerAddr);
     }
@@ -254,7 +255,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 	public String getVoiceRecordAndPlayProcessAddr() {
 		return voiceProcessServerAddr;
     }
-	
+
 	public String md5String(String content) {
 		try {
 			MessageDigest m = MessageDigest.getInstance("MD5");
@@ -270,7 +271,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		}
 		return "NA";
     }
-	
+
 	public void voiceuploadUpdated(String path, String time) {
 		String filePath = path.substring(0, path.lastIndexOf("/"));
 		String fileName = path.substring(path.lastIndexOf("/") + 1);
@@ -330,7 +331,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 			Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "voiceuploadUpdated:error:" + e.toString());
 		}
     }
-	
+
     public void setRequestedOrientation(final String so) {
 		if(so.equals("landscape")) {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -343,6 +344,17 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		}
     }
     
+	@Override
+	public void onWindowFocusChanged(boolean hasWindowFocus) {
+		super.onWindowFocusChanged(hasWindowFocus);
+		Log.d("onWindowFocusChanged", "onWindowFocusChanged");
+		if (hasWindowFocus) {
+			Log.d("onWindowFocusChanged", "focused");
+		}else{
+			Log.d("onWindowFocusChanged", "unfocused");
+		}
+	}
+	
     public void initBatteryChargingChecker()
     {
     	if(null == pcr){
@@ -714,7 +726,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
     @Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onNewIntent");
+		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "onNewIntent");
 		setIntent(intent);
 		if(getIntent() != null){
 			getURLParame();
@@ -858,7 +870,7 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		super.onResume();
 		TalkingDataGA.onResume(this);
 		
-		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onResume");
+		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "onResume");
 	}
 
 	@Override
@@ -867,14 +879,14 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
 		super.onPause();
 		TalkingDataGA.onPause(this);
 		
-		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onPause");
+		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "onPause");
 	}
 
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		super.onDestroy();  
-		Log.d("hhllqp>>>>>>>>>>>>>>>>>>>>>>>>>", "onDestroy");
+		Log.d("cnklds>>>>>>>>>>>>>>>>>>>>>>>>>", "onDestroy");
 		keepScreenOn(this, false);  
 		
 		if(true == isYvSDKInitSuccess) {
@@ -1175,14 +1187,14 @@ public class AppActivity extends Cocos2dxActivity implements MessageEventListene
         String copyText = "";
         if(cm.hasText()) {
         	copyText = cm.getText().toString();
-        	if(copyText.indexOf("»ð»ðÁÉÄþÆåÅÆ") != -1) {
-        		String pattern = "·¿ºÅ\\\\s+|\\\\S+¡¾\\\\d+¡¿";
+        	if(copyText.indexOf("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½") != -1) {
+        		String pattern = "ï¿½ï¿½ï¿½ï¿½\\\\s+|\\\\S+ï¿½ï¿½\\\\d+ï¿½ï¿½";
         		Pattern r = Pattern.compile(pattern);
         		Matcher m = r.matcher(copyText);
         		if (m.find()) {
         			copyText = m.group(0);
         		}else {
-        			pattern = "»Ø·ÅÂë:\\\\s+|\\\\S+\\\\d+";
+        			pattern = "ï¿½Ø·ï¿½ï¿½ï¿½:\\\\s+|\\\\S+\\\\d+";
         			r = Pattern.compile(pattern);
         			m = r.matcher(copyText);
         			if (m.find()) {

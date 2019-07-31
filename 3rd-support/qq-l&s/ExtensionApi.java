@@ -26,13 +26,17 @@ import org.ynlib.utils.Utils;
 import org.cocos2dx.lib.Cocos2dxLuaJavaBridge;
 
 import com.tencent.connect.share.QQShare;
-import com.tencent.mm.sdk.openapi.IWXAPI;
-import com.tencent.mm.sdk.openapi.WXAPIFactory;
+// import com.tencent.mm.sdk.openapi.IWXAPI;
+// import com.tencent.mm.sdk.openapi.WXAPIFactory;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.tencent.mm.opensdk.modelbiz.WXLaunchMiniProgram;
+
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
-import com.sevenjzc.hhllqp.qqapi.QQBaseUIListener;
-import com.sevenjzc.hhllqp.qqapi.QQShareActivity;
+import com.sevenjzc.cnklds.qqapi.QQBaseUIListener;
+import com.sevenjzc.cnklds.qqapi.QQShareActivity;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,6 +75,9 @@ import android.util.Log;
 import android.view.Display;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.view.View;
+import android.view.ViewGroup;
+import android.telephony.TelephonyManager;
 
 import com.android.dingtalk.share.ddsharemodule.DDShareApiFactory;
 import com.android.dingtalk.share.ddsharemodule.IDDShareApi;
@@ -103,7 +110,7 @@ import com.alipay.share.sdk.openapi.APWebPageObject;
 import com.alipay.share.sdk.openapi.IAPApi;
 import com.alipay.share.sdk.openapi.SendMessageToZFB;
 
-import com.sevenjzc.hhllqp.R;
+import com.sevenjzc.cnklds.R;
 /**
  * 
  * @author yangyi
@@ -144,7 +151,7 @@ public class ExtensionApi {
 	 * @param jsonStr
 	 */
 	public static void callBackOnGLThread(final String jsonStr) {
-		Log.i(Constant.LOG_TAG, jsonStr);
+		Log.d(Constant.LOG_TAG, jsonStr);
 		appActivity.runOnGLThread(new Runnable() {
             @Override
             public void run() {
@@ -176,6 +183,269 @@ public class ExtensionApi {
 		appActivity.initOrientationChecker();
 	}
 	
+	public static boolean isEmulator() {
+		String[] known_pipes={
+			"/dev/socket/qemud",
+			"/dev/qemu_pipe"
+		};
+	
+		String[] known_qemu_drivers = {
+			"goldfish"
+		};
+	
+		String[] known_files = {
+			// vbox模拟器文件
+            "/data/youwave_id",
+            "/dev/vboxguest",
+            "/dev/vboxuser",
+            "/mnt/prebundledapps/bluestacks.prop.orig",
+            "/mnt/prebundledapps/propfiles/ics.bluestacks.prop.note",
+            "/mnt/prebundledapps/propfiles/ics.bluestacks.prop.s2",
+            "/mnt/prebundledapps/propfiles/ics.bluestacks.prop.s3",
+            "/mnt/sdcard/bstfolder/InputMapper/com.bluestacks.appmart.cfg",
+            "/mnt/sdcard/buildroid-gapps-ics-20120317-signed.tgz",
+            "/mnt/sdcard/windows/InputMapper/com.bluestacks.appmart.cfg",
+            "/proc/irq/9/vboxguest",
+            "/sys/bus/pci/drivers/vboxguest",
+            "/sys/bus/pci/drivers/vboxguest/0000:00:04.0",
+            "/sys/bus/pci/drivers/vboxguest/bind",
+            "/sys/bus/pci/drivers/vboxguest/module",
+            "/sys/bus/pci/drivers/vboxguest/new_id",
+            "/sys/bus/pci/drivers/vboxguest/remove_id",
+            "/sys/bus/pci/drivers/vboxguest/uevent",
+            "/sys/bus/pci/drivers/vboxguest/unbind",
+            "/sys/bus/platform/drivers/qemu_pipe",
+            "/sys/bus/platform/drivers/qemu_trace",
+            "/sys/class/bdi/vboxsf-c",
+            "/sys/class/misc/vboxguest",
+            "/sys/class/misc/vboxuser",
+            "/sys/devices/virtual/bdi/vboxsf-c",
+            "/sys/devices/virtual/misc/vboxguest",
+            "/sys/devices/virtual/misc/vboxguest/dev",
+            "/sys/devices/virtual/misc/vboxguest/power",
+            "/sys/devices/virtual/misc/vboxguest/subsystem",
+            "/sys/devices/virtual/misc/vboxguest/uevent",
+            "/sys/devices/virtual/misc/vboxuser",
+            "/sys/devices/virtual/misc/vboxuser/dev",
+            "/sys/devices/virtual/misc/vboxuser/power",
+            "/sys/devices/virtual/misc/vboxuser/subsystem",
+            "/sys/devices/virtual/misc/vboxuser/uevent",
+            "/sys/module/vboxguest",
+            "/sys/module/vboxguest/coresize",
+            "/sys/module/vboxguest/drivers",
+            "/sys/module/vboxguest/drivers/pci:vboxguest",
+            "/sys/module/vboxguest/holders",
+            "/sys/module/vboxguest/holders/vboxsf",
+            "/sys/module/vboxguest/initsize",
+            "/sys/module/vboxguest/initstate",
+            "/sys/module/vboxguest/notes",
+            "/sys/module/vboxguest/notes/.note.gnu.build-id",
+            "/sys/module/vboxguest/parameters",
+            "/sys/module/vboxguest/parameters/log",
+            "/sys/module/vboxguest/parameters/log_dest",
+            "/sys/module/vboxguest/parameters/log_flags",
+            "/sys/module/vboxguest/refcnt",
+            "/sys/module/vboxguest/sections",
+            "/sys/module/vboxguest/sections/.altinstructions",
+            "/sys/module/vboxguest/sections/.altinstr_replacement",
+            "/sys/module/vboxguest/sections/.bss",
+            "/sys/module/vboxguest/sections/.data",
+            "/sys/module/vboxguest/sections/.devinit.data",
+            "/sys/module/vboxguest/sections/.exit.text",
+            "/sys/module/vboxguest/sections/.fixup",
+            "/sys/module/vboxguest/sections/.gnu.linkonce.this_module",
+            "/sys/module/vboxguest/sections/.init.text",
+            "/sys/module/vboxguest/sections/.note.gnu.build-id",
+            "/sys/module/vboxguest/sections/.rodata",
+            "/sys/module/vboxguest/sections/.rodata.str1.1",
+            "/sys/module/vboxguest/sections/.smp_locks",
+            "/sys/module/vboxguest/sections/.strtab",
+            "/sys/module/vboxguest/sections/.symtab",
+            "/sys/module/vboxguest/sections/.text",
+            "/sys/module/vboxguest/sections/__ex_table",
+            "/sys/module/vboxguest/sections/__ksymtab",
+            "/sys/module/vboxguest/sections/__ksymtab_strings",
+            "/sys/module/vboxguest/sections/__param",
+            "/sys/module/vboxguest/srcversion",
+            "/sys/module/vboxguest/taint",
+            "/sys/module/vboxguest/uevent",
+            "/sys/module/vboxguest/version",
+            "/sys/module/vboxsf",
+            "/sys/module/vboxsf/coresize",
+            "/sys/module/vboxsf/holders",
+            "/sys/module/vboxsf/initsize",
+            "/sys/module/vboxsf/initstate",
+            "/sys/module/vboxsf/notes",
+            "/sys/module/vboxsf/notes/.note.gnu.build-id",
+            "/sys/module/vboxsf/refcnt",
+            "/sys/module/vboxsf/sections",
+            "/sys/module/vboxsf/sections/.bss",
+            "/sys/module/vboxsf/sections/.data",
+            "/sys/module/vboxsf/sections/.exit.text",
+            "/sys/module/vboxsf/sections/.gnu.linkonce.this_module",
+            "/sys/module/vboxsf/sections/.init.text",
+            "/sys/module/vboxsf/sections/.note.gnu.build-id",
+            "/sys/module/vboxsf/sections/.rodata",
+            "/sys/module/vboxsf/sections/.rodata.str1.1",
+            "/sys/module/vboxsf/sections/.smp_locks",
+            "/sys/module/vboxsf/sections/.strtab",
+            "/sys/module/vboxsf/sections/.symtab",
+            "/sys/module/vboxsf/sections/.text",
+            "/sys/module/vboxsf/sections/__bug_table",
+            "/sys/module/vboxsf/sections/__param",
+            "/sys/module/vboxsf/srcversion",
+            "/sys/module/vboxsf/taint",
+            "/sys/module/vboxsf/uevent",
+            "/sys/module/vboxsf/version",
+            "/sys/module/vboxvideo",
+            "/sys/module/vboxvideo/coresize",
+            "/sys/module/vboxvideo/holders",
+            "/sys/module/vboxvideo/initsize",
+            "/sys/module/vboxvideo/initstate",
+            "/sys/module/vboxvideo/notes",
+            "/sys/module/vboxvideo/notes/.note.gnu.build-id",
+            "/sys/module/vboxvideo/refcnt",
+            "/sys/module/vboxvideo/sections",
+            "/sys/module/vboxvideo/sections/.data",
+            "/sys/module/vboxvideo/sections/.exit.text",
+            "/sys/module/vboxvideo/sections/.gnu.linkonce.this_module",
+            "/sys/module/vboxvideo/sections/.init.text",
+            "/sys/module/vboxvideo/sections/.note.gnu.build-id",
+            "/sys/module/vboxvideo/sections/.rodata.str1.1",
+            "/sys/module/vboxvideo/sections/.strtab",
+            "/sys/module/vboxvideo/sections/.symtab",
+            "/sys/module/vboxvideo/sections/.text",
+            "/sys/module/vboxvideo/srcversion",
+            "/sys/module/vboxvideo/taint",
+            "/sys/module/vboxvideo/uevent",
+            "/sys/module/vboxvideo/version",
+            "/system/app/bluestacksHome.apk",
+            "/system/bin/androVM-prop",
+            "/system/bin/androVM-vbox-sf",
+            "/system/bin/androVM_setprop",
+            "/system/bin/get_androVM_host",
+            "/system/bin/mount.vboxsf",
+            "/system/etc/init.androVM.sh",
+            "/system/etc/init.buildroid.sh",
+            "/system/lib/hw/audio.primary.vbox86.so",
+            "/system/lib/hw/camera.vbox86.so",
+            "/system/lib/hw/gps.vbox86.so",
+            "/system/lib/hw/gralloc.vbox86.so",
+            "/system/lib/hw/sensors.vbox86.so",
+            "/system/lib/modules/3.0.8-android-x86+/extra/vboxguest",
+            "/system/lib/modules/3.0.8-android-x86+/extra/vboxguest/vboxguest.ko",
+            "/system/lib/modules/3.0.8-android-x86+/extra/vboxsf",
+            "/system/lib/modules/3.0.8-android-x86+/extra/vboxsf/vboxsf.ko",
+            "/system/lib/vboxguest.ko",
+            "/system/lib/vboxsf.ko",
+            "/system/lib/vboxvideo.ko",
+            "/system/usr/idc/androVM_Virtual_Input.idc",
+            "/system/usr/keylayout/androVM_Virtual_Input.kl",
+
+            "/system/xbin/mount.vboxsf",
+            "/ueventd.android_x86.rc",
+            "/ueventd.vbox86.rc",
+            "/ueventd.goldfish.rc",
+            "/fstab.vbox86",
+            "/init.vbox86.rc",
+            "/init.goldfish.rc",
+
+            // ========针对原生Android模拟器 内核：goldfish===========
+            "/sys/module/goldfish_audio",
+            "/sys/module/goldfish_sync",
+
+            // ========针对蓝叠模拟器===========
+            "/data/app/com.bluestacks.appmart-1.apk",
+            "/data/app/com.bluestacks.BstCommandProcessor-1.apk",
+            "/data/app/com.bluestacks.help-1.apk",
+            "/data/app/com.bluestacks.home-1.apk",
+            "/data/app/com.bluestacks.s2p-1.apk",
+            "/data/app/com.bluestacks.searchapp-1.apk",
+            "/data/bluestacks.prop",
+            "/data/data/com.androVM.vmconfig",
+            "/data/data/com.bluestacks.accelerometerui",
+            "/data/data/com.bluestacks.appfinder",
+            "/data/data/com.bluestacks.appmart",
+            "/data/data/com.bluestacks.appsettings",
+            "/data/data/com.bluestacks.BstCommandProcessor",
+            "/data/data/com.bluestacks.bstfolder",
+            "/data/data/com.bluestacks.help",
+            "/data/data/com.bluestacks.home",
+            "/data/data/com.bluestacks.s2p",
+            "/data/data/com.bluestacks.searchapp",
+            "/data/data/com.bluestacks.settings",
+            "/data/data/com.bluestacks.setup",
+            "/data/data/com.bluestacks.spotlight",
+
+            // ========针对逍遥安卓模拟器===========
+            "/data/data/com.microvirt.download",
+            "/data/data/com.microvirt.guide",
+            "/data/data/com.microvirt.installer",
+            "/data/data/com.microvirt.launcher",
+            "/data/data/com.microvirt.market",
+            "/data/data/com.microvirt.memuime",
+            "/data/data/com.microvirt.tools",
+
+            // ========针对Mumu模拟器===========
+            "/data/data/com.mumu.launcher",
+            "/data/data/com.mumu.store",
+            "/data/data/com.netease.mumu.cloner"
+		};
+
+		boolean checkPipes = false;
+        for(int i = 0; i < known_pipes.length; i++){
+            String pipes = known_pipes[i];
+            File qemu_socket = new File(pipes);
+            if(qemu_socket.exists()){
+                checkPipes = true;
+            }
+        }
+
+		boolean checkQDrivers = false;
+        File driver_file = new File("/proc/tty/drivers");
+        if(driver_file.exists() && driver_file.canRead()){
+            byte[] data = new byte[1024];
+            try {
+                InputStream inStream = new FileInputStream(driver_file);
+                inStream.read(data);
+                inStream.close();      
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String driver_data = new String(data);
+            for(String known_qemu_driver : known_qemu_drivers){
+                if(driver_data.indexOf(known_qemu_driver) != -1){
+                    checkQDrivers = true;
+                }
+            }
+        }
+
+		boolean checkFiles = false;
+		for(int i = 0; i < known_files.length; i++){
+            String file_name = known_files[i];
+            File qemu_file = new File(file_name);
+            if(qemu_file.exists()){
+                checkFiles = true;
+            }
+        }
+
+		boolean checkPhoneSeriveProviders = false;
+		String szOperatorName = ((TelephonyManager)appActivity.getSystemService("phone")).getNetworkOperatorName();
+        if (szOperatorName.toLowerCase().equals("android") == true) {
+            checkPhoneSeriveProviders = true;
+        }
+
+    	return checkPipes || checkQDrivers || checkFiles || checkPhoneSeriveProviders
+			|| Build.FINGERPRINT.contains("generic")
+            || Build.FINGERPRINT.contains("unknown")
+            || Build.MODEL.contains("google_sdk")
+            || Build.MODEL.contains("Emulator")
+            || Build.MODEL.contains("Android SDK built for x86")
+            || Build.MANUFACTURER.contains("Genymotion")
+            || (Build.BRAND.contains("generic") && Build.DEVICE.contains("generic"))
+            || "google_sdk".equals(Build.PRODUCT);
+	}
+
 	public static String getAllPhoneContacts() {
 		String num = ContactsContract.CommonDataKinds.Phone.NUMBER;
 		String name = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME;
@@ -222,7 +492,8 @@ public class ExtensionApi {
 		float ratio = screenWidth * 1.0f / screenHeight;
 		
 		boolean isHD = 1920 == screenWidth && screenHeight == 1080;
-		return (ratio > 1.86 || isHD ) && Build.MANUFACTURER.equals("HUAWEI") && Build.BRAND.equals("HONOR");
+		boolean isRet = (ratio > 1.86 || isHD ) && Build.MANUFACTURER.equals("HUAWEI") && Build.BRAND.equals("HONOR");
+		return isRet;
 	}
 	
 	public static boolean isQQDownloaderInstalled(final String packageName) {
@@ -294,12 +565,12 @@ public class ExtensionApi {
         File filePic;
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
-            savePath = "/sdcard/yyjddmjTmp/";
+            savePath = "/sdcard/cnkldsTmp/";
         } else {
-            savePath = appActivity.getApplicationContext().getFilesDir().getAbsolutePath() + "/yyjddmjTmp/";
+            savePath = appActivity.getApplicationContext().getFilesDir().getAbsolutePath() + "/cnkldsTmp/";
         }
         try {
-            filePic = new File(savePath + "yyjddmjTmpCapture" + ".jpg");
+            filePic = new File(savePath + "cnkldsTmpCapture" + ".jpg");
             if (!filePic.exists()) {
                 filePic.getParentFile().mkdirs();
                 filePic.createNewFile();
@@ -434,8 +705,8 @@ public class ExtensionApi {
 	        gameObject.roomId = beforeAnd;
 	        gameObject.roomToken = afterAnd;
 
-	        gameObject.androidDownloadUrl = "https://fir.im/hhlnqp01";
-	        gameObject.iOSDownloadUrl = "https://fir.im/hhlnqp02";
+	        gameObject.androidDownloadUrl = "http://fir.im/newkulongdaishen01";
+	        gameObject.iOSDownloadUrl = "http://fir.im/newkulongdaishen02";
 
 	        SGMediaMessage msg = new SGMediaMessage();
 	        msg.mediaObject = gameObject;
@@ -585,7 +856,7 @@ public class ExtensionApi {
 	public static boolean openDingTalk() {
         SendAuth.Req req = new SendAuth.Req();
         req.scope = SendAuth.Req.SNS_LOGIN;
-        req.state = "hhllqp";
+        req.state = "cnklds";
         if(req.getSupportVersion() > appActivity.getDingTalkShareApi().getDDSupportAPI()){
             return false;
         }
@@ -851,6 +1122,28 @@ public class ExtensionApi {
 		return false;
 	}
 	 
+	 /*
+	  *wxMiniProgram
+	  */
+	public static void launchWXMiniProgram(String id, String path, String type) {
+		WXLaunchMiniProgram.Req req = new WXLaunchMiniProgram.Req();
+		req.userName = id;
+		if(!path.equals("")) {
+			req.path = path;
+		}
+		if(type.equals("0"))
+		{
+			req.miniprogramType = WXLaunchMiniProgram.Req.MINIPTOGRAM_TYPE_RELEASE;
+		}
+		else
+		{
+			req.miniprogramType = 2;
+		}
+		String weixinId = Utils.getMetaData(ExtensionApi.appActivity, Constant.WX_APPID_KEY);
+		IWXAPI api = WXAPIFactory.createWXAPI(ExtensionApi.appActivity, weixinId, false);
+		api.sendReq(req);
+	}
+
 	/**
 	 * 
 	 */
@@ -914,7 +1207,7 @@ public class ExtensionApi {
 	         Class c = Class.forName("android.os.SystemProperties");
 	         Method m = c.getDeclaredMethod("get", String.class);
 	         m.setAccessible(true);
-	         sNavBarOverride = (String) m.invoke(null, "qemu.hw.mainkeys");
+	         sNavBarOverride = (String) m.invoke(c, "qemu.hw.mainkeys");
 	      } catch (Throwable e) {
 	      }
 	   }
@@ -940,16 +1233,83 @@ public class ExtensionApi {
 	   }
 	}
 
+	public static boolean navigationGestureEnabled(Context context) {
+        int val = Settings.Global.getInt(context.getContentResolver(), getBrandDeviceInfo(), 0);
+        return val != 0;
+    }
+
+	public static String getBrandDeviceInfo() {
+        String brand = Build.BRAND;
+        if(TextUtils.isEmpty(brand)) return "navigationbar_is_min";
+
+        if (brand.equalsIgnoreCase("HUAWEI")||"HONOR".equals(brand)) {
+            return "navigationbar_is_min";
+        } else if (brand.equalsIgnoreCase("XIAOMI")) {
+            return "force_fsg_nav_bar";
+        } else if (brand.equalsIgnoreCase("VIVO")) {
+            return "navigation_gesture_on";
+        } else if (brand.equalsIgnoreCase("OPPO")) {
+            return "navigation_gesture_on";
+        } else if(brand.equalsIgnoreCase("samsung")){
+            return "navigationbar_hide_bar_enabled";
+        }else {
+            return "navigationbar_is_min";
+        }
+    }
+
+	public static boolean hasNavigationBarShown() {
+		return deviceHasNavigationBar() && !navigationGestureEnabled(appActivity);
+	}
+
+	public static boolean hasNavigationBarShown2() {
+        return (Settings.Global.getInt(appActivity.getContentResolver(), "force_fsg_nav_bar", 0) != 0);
+	}
+
+	public static boolean hasNavigationBarShown3(){
+        String NAVIGATION= "navigationBarBackground";
+		ViewGroup vp = (ViewGroup) appActivity.getWindow().getDecorView();
+		if (vp != null) {
+			Log.d("getNavigationBarHeight", "vp != null");
+			for (int i = 0; i < vp.getChildCount(); i++) {
+				vp.getChildAt(i).getContext().getPackageName();
+				if (vp.getChildAt(i).getId()!= -1 && NAVIGATION.equals(appActivity.getResources().getResourceEntryName(vp.getChildAt(i).getId()))) {
+					return true;
+				}
+			}
+		}else{
+			Log.d("getNavigationBarHeight", "vp == null");
+		}
+        return false;
+    }
+
+	public static boolean deviceHasNavigationBar() {
+        boolean haveNav = false;
+        try {
+            Class<?> windowManagerGlobalClass = Class.forName("android.view.WindowManagerGlobal");
+            Method getWmServiceMethod = windowManagerGlobalClass.getDeclaredMethod("getWindowManagerService");
+            getWmServiceMethod.setAccessible(true);
+            Object iWindowManager = getWmServiceMethod.invoke(null);
+            Class<?> iWindowManagerClass = iWindowManager.getClass();
+            Method hasNavBarMethod = iWindowManagerClass.getDeclaredMethod("hasNavigationBar");
+            hasNavBarMethod.setAccessible(true);
+            haveNav = (Boolean) hasNavBarMethod.invoke(iWindowManager);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return haveNav;
+    }
+
 	public static int getNavigationBarHeight() {
-	   int result = 0;
-	   if (hasNavBar(appActivity)) {
+		Log.d("getNavigationBarHeight", "detect");
+	   	int result = 0;
+	   	if (hasNavBar(appActivity)) {
 	      Resources res = appActivity.getResources();
 	      int resourceId = res.getIdentifier("navigation_bar_height", "dimen", "android");
 	      if (resourceId > 0) {
 	         result = res.getDimensionPixelSize(resourceId);
 	      }
-	   }
-	   return result;
+	   	}
+	   	return result;
 	}
 
     /**
@@ -992,7 +1352,7 @@ public class ExtensionApi {
      * 
      */
     public static void voiceupload(String path, String time) {   
-    	//appActivity.voiceupload(path, time);
+    	// appActivity.voiceupload(path, time);
 		appActivity.voiceuploadUpdated(path, time);
     }
     
@@ -1003,6 +1363,11 @@ public class ExtensionApi {
     	appActivity.voicePlay(url);
     }
     
+	//init voice env
+    public static void initVoiceRecordAndPlayProcessAddr(String addr) {
+    	appActivity.setVoiceRecordAndPlayProcessAddr(addr);
+    }
+
     //stop voice playing
     public static void stopAllVoice() {
     	appActivity.stopAllVoice();

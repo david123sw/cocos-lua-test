@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.sevenjzc.hhllqp"
+      package="com.sevenjzc.cnklds"
       android:versionCode="1"
-      android:versionName="1.0.0"
+      android:versionName="1.0.2"
       android:installLocation="auto">
 
     <uses-sdk android:minSdkVersion="19"/>
@@ -31,10 +31,11 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />  
                 <category android:name="android.intent.category.BROWSABLE" />  
-                <data android:scheme="hhllqp" android:host="hhllqp.com" />
+                <data android:scheme="cnklds" android:host="cnklds.com" />
             </intent-filter>
         </activity>
         
+        <!-- qq -->
         <activity
        		android:name="com.tencent.tauth.AuthActivity"
        		android:launchMode="singleInstance" >
@@ -42,7 +43,7 @@
            		<action android:name="android.intent.action.VIEW" />
            		<category android:name="android.intent.category.DEFAULT" />
            		<category android:name="android.intent.category.BROWSABLE" />
-           		<data android:scheme="tencent101542064" />
+           		<data android:scheme="tencent101561682" />
     		</intent-filter>
  		</activity>
  		
@@ -58,7 +59,7 @@
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:launchMode="singleInstance"
-            android:name="com.sevenjzc.hhllqp.ddshare.DDShareActivity">
+            android:name="com.sevenjzc.cnklds.ddshare.DDShareActivity">
             <intent-filter>  
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -66,7 +67,7 @@
         </activity>
         
         <!-- xl -->
-        <activity android:name="com.sevenjzc.hhllqp.sgapi.SGEntryActivity"
+        <activity android:name="com.sevenjzc.cnklds.sgapi.SGEntryActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <!--用于接收从闲聊邀请跳转进应用的roomId roomToken-->
@@ -76,7 +77,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <!--scheme = "paraches" 固定不能改变，host = "xianliao"+ 你申请的appId-->
                 <data android:scheme="paraches"
-                      android:host="xianliaoBZ6dpUzG0ULM0FG0"/>
+                      android:host="xianliaomfK4ivhTYSvcnua0"/>
             </intent-filter>
         </activity>
 
@@ -109,7 +110,7 @@
         <!-- meta-data 定义 -->
         <meta-data
             android:name="WX_APPID"
-            android:value="wxc5358d127330b22c" />
+            android:value="wx5e0039d2e2bafecb" />
         <!-- weixin sdk end -->
         <!-- alipay sdk begin -->
 
@@ -121,16 +122,14 @@
             android:windowSoftInputMode="adjustResize|stateHidden" >
         </activity>
 
-		<!-- <service android:name="com.yunva.im.sdk.lib.service.VioceService" /> -->
-
-		<service android:name="com.pg.core.sdk.lib.YayaService"/>
+        <service android:name="com.yunva.im.sdk.lib.service.VioceService" />
 
         <!-- alipay sdk end -->
         
 		<!-- 高德sdk -->
 		<meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="d65e9576a9c1dba3253060d6b8b0d4a3" />
+            android:value="93b4d428c0fbed04d30fc84a843eb26b" />
 		<service android:name="com.amap.api.location.APSService"></service>
 					
         <receiver android:name="org.game.PhoneStatReceiver" >
