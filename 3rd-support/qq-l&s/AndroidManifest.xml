@@ -87,6 +87,7 @@
             android:exported="true"
             android:label="@string/wx_api"
             android:screenOrientation="landscape"
+			android:taskAffinity="com.sevenjzc.cnklds"
             android:theme="@style/wxActivityTheme">
         </activity>
         
